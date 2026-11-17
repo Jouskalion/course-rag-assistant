@@ -19,6 +19,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '24.22.3'
+      - name: Merge gate verification
+        run: node --test .github/scripts/codex-review-gate.test.cjs
       - name: Contract consistency
         run: node scripts/generate-contracts.mjs --check
       - name: Backend package
