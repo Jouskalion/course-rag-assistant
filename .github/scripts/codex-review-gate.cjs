@@ -67,12 +67,20 @@ async function run({ github, context, core }) {
     return;
   }
   const sha = pull.head.sha;
-  const externalId = `courseqa-codex-gate:pr:${pull_number}:${sha}`;
-  const checks = await github.paginate(github.rest.checks.listForRef, {
-    owner, repo, ref: sha, check_name: CHECK_NAME, filter: 'all', per_page: 100,
-  });
-  const existing = checks.filter(c => c.app?.id === ACTIONS_APP_ID
-    && c.external_id === externalId).sort((a, b) => b.id - a.id)[0];
+  const externalPrefix = `courseqa-codex-gate:pr:${pull_number}:${sha}:target:`;
+  const externalId = `${externalPrefix}${context.runId}:${context.runAttempt ?? 1}`;
+  let existing;
+  if (context.eventName !== 'pull_request_target') {
+    const checks = await github.paginate(github.rest.checks.listForRef, {
+      owner, repo, ref: sha, check_name: CHECK_NAME, filter: 'all', per_page: 100,
+    });
+    existing = checks.filter(c => c.app?.id === ACTIONS_APP_ID
+      && c.external_id?.startsWith(externalPrefix)).sort((a, b) => b.id - a.id)[0];
+    if (!existing) {
+      core.setFailed('等待 PR 事件建立必需检查；若仍缺少检查，请重新打开 PR。');
+      return;
+    }
+  }
   const runUrl = `${context.serverUrl}/${owner}/${repo}/actions/runs/${context.runId}`;
   const initial = {
     owner, repo, name: CHECK_NAME, status: 'completed', conclusion: 'failure',
@@ -81,6 +89,9 @@ async function run({ github, context, core }) {
   };
   // Completed/failure is intentional while waiting: it cannot accidentally
   // count as success if the workflow is cancelled or an API request fails.
+  // Each PR event needs a check in its new, eligible workflow suite. Comment
+  // and manual events only update that newest PR check: their own workflow
+  // suites are not eligible to satisfy required GitHub Actions checks.
   const { data: check } = existing
     ? await github.rest.checks.update({ ...initial, check_run_id: existing.id })
     : await github.rest.checks.create({ ...initial, head_sha: sha, external_id: externalId });
