@@ -91,11 +91,12 @@ test('a concurrent comment edit cannot pass using mismatched API snapshots', () 
   assert.equal(evaluate(data).conclusion, 'failure');
 });
 
-function harness({ latestSha = SHA, apiFails = false } = {}) {
+function harness({ latestSha = SHA, apiFails = false, published = true } = {}) {
   const data = fixture();
   const writes = [];
   let reads = 0;
   let failed = false;
+  const listForRef = () => {};
   const listComments = () => {};
   const github = {
     rest: {
@@ -105,11 +106,17 @@ function harness({ latestSha = SHA, apiFails = false } = {}) {
       } }) },
       issues: { listComments },
       checks: {
+        listForRef,
         create: async params => { writes.push(params); return { data: { id: 42 } }; },
         update: async params => { writes.push(params); return { data: { id: 42 } }; },
       },
     },
     paginate: async method => {
+      if (method === listForRef) return published ? [
+        { id: 40, app: { id: 15368 }, external_id: `courseqa-codex-gate:pr:1:${SHA}:target:120:1` },
+        { id: 42, app: { id: 15368 }, external_id: `courseqa-codex-gate:pr:1:${SHA}:target:123:1` },
+        { id: 43, app: { id: 1 }, external_id: `courseqa-codex-gate:pr:1:${SHA}:target:124:1` },
+      ] : [];
       assert.equal(method, listComments);
       if (apiFails) throw Object.assign(new Error('Unavailable'), { status: 503 });
       // A newer human-written copy must never replace the real review.
@@ -119,13 +126,13 @@ function harness({ latestSha = SHA, apiFails = false } = {}) {
   };
   const context = {
     repo: { owner: 'example', repo: 'project' }, payload: { inputs: { pr_number: '1' } },
-    serverUrl: 'https://github.com', runId: 123, runAttempt: 1,
+    serverUrl: 'https://github.com', runId: 123, runAttempt: 1, eventName: 'pull_request_target',
   };
   const core = { info() {}, warning() {}, setFailed() { failed = true; } };
   return { github, context, core, writes, failed: () => failed };
 }
 
-test('every workflow invocation publishes its own check before passing the verified head', async () => {
+test('every PR event publishes its own eligible check before passing the verified head', async () => {
   const ids = [];
   for (const runId of [123, 124]) {
     const h = harness(); h.context.runId = runId; await run(h);
@@ -137,6 +144,22 @@ test('every workflow invocation publishes its own check before passing the verif
     ids.push(h.writes[0].external_id);
   }
   assert.notEqual(ids[0], ids[1]);
+});
+
+test('comment and manual events update the newest eligible PR check instead of creating one', async () => {
+  for (const event of ['issue_comment', 'workflow_dispatch']) {
+    const h = harness(); h.context.eventName = event; await run(h);
+    assert.equal(h.writes.length, 2);
+    assert.ok(h.writes.every(write => write.check_run_id === 42));
+    assert.equal(h.writes[1].conclusion, 'success');
+  }
+});
+
+test('non-PR events cannot manufacture a passing check when the eligible PR run is missing', async () => {
+  const h = harness({ published: false }); h.context.eventName = 'issue_comment';
+  await run(h);
+  assert.equal(h.writes.length, 0);
+  assert.equal(h.failed(), true);
 });
 
 test('a push during verification cannot receive an obsolete passing result', async () => {

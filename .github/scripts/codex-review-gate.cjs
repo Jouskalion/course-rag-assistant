@@ -3,6 +3,7 @@
 const CHECK_NAME = 'codex-review';
 const BOT_ID = 199175422;
 const APP_ID = 1144995;
+const ACTIONS_APP_ID = 15368;
 const BOT_LOGIN = 'chatgpt-codex-connector[bot]';
 const SUMMARY = '<!-- codex-pull-request-review-summary -->';
 
@@ -66,7 +67,20 @@ async function run({ github, context, core }) {
     return;
   }
   const sha = pull.head.sha;
-  const externalId = `courseqa-codex-gate:pr:${pull_number}:${sha}:${context.runId}:${context.runAttempt}`;
+  const externalPrefix = `courseqa-codex-gate:pr:${pull_number}:${sha}:target:`;
+  const externalId = `${externalPrefix}${context.runId}:${context.runAttempt ?? 1}`;
+  let existing;
+  if (context.eventName !== 'pull_request_target') {
+    const checks = await github.paginate(github.rest.checks.listForRef, {
+      owner, repo, ref: sha, check_name: CHECK_NAME, filter: 'all', per_page: 100,
+    });
+    existing = checks.filter(c => c.app?.id === ACTIONS_APP_ID
+      && c.external_id?.startsWith(externalPrefix)).sort((a, b) => b.id - a.id)[0];
+    if (!existing) {
+      core.setFailed('等待 PR 事件建立必需检查；若仍缺少检查，请重新打开 PR。');
+      return;
+    }
+  }
   const runUrl = `${context.serverUrl}/${owner}/${repo}/actions/runs/${context.runId}`;
   const initial = {
     owner, repo, name: CHECK_NAME, status: 'completed', conclusion: 'failure',
@@ -75,12 +89,12 @@ async function run({ github, context, core }) {
   };
   // Completed/failure is intentional while waiting: it cannot accidentally
   // count as success if the workflow is cancelled or an API request fails.
-  // Each workflow invocation needs its own check, associated with that run's
-  // check suite. Updating a previous invocation's completed check can leave
-  // GitHub waiting for the required context in the newest workflow run.
-  const { data: check } = await github.rest.checks.create({
-    ...initial, head_sha: sha, external_id: externalId,
-  });
+  // Each PR event needs a check in its new, eligible workflow suite. Comment
+  // and manual events only update that newest PR check: their own workflow
+  // suites are not eligible to satisfy required GitHub Actions checks.
+  const { data: check } = existing
+    ? await github.rest.checks.update({ ...initial, check_run_id: existing.id })
+    : await github.rest.checks.create({ ...initial, head_sha: sha, external_id: externalId });
 
   let result;
   let comment;
