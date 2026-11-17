@@ -3,7 +3,6 @@
 const CHECK_NAME = 'codex-review';
 const BOT_ID = 199175422;
 const APP_ID = 1144995;
-const ACTIONS_APP_ID = 15368;
 const BOT_LOGIN = 'chatgpt-codex-connector[bot]';
 const SUMMARY = '<!-- codex-pull-request-review-summary -->';
 
@@ -67,34 +66,17 @@ async function run({ github, context, core }) {
     return;
   }
   const sha = pull.head.sha;
-  const externalPrefix = `courseqa-codex-gate:pr:${pull_number}:${sha}:target:`;
-  const externalId = `${externalPrefix}${context.runId}:${context.runAttempt ?? 1}`;
-  let existing;
-  if (context.eventName !== 'pull_request_target') {
-    const checks = await github.paginate(github.rest.checks.listForRef, {
-      owner, repo, ref: sha, check_name: CHECK_NAME, filter: 'all', per_page: 100,
-    });
-    existing = checks.filter(c => c.app?.id === ACTIONS_APP_ID
-      && c.external_id?.startsWith(externalPrefix)).sort((a, b) => b.id - a.id)[0];
-    if (!existing) {
-      core.setFailed('等待 PR 事件建立必需检查；若仍缺少检查，请重新打开 PR。');
-      return;
-    }
-  }
   const runUrl = `${context.serverUrl}/${owner}/${repo}/actions/runs/${context.runId}`;
-  const initial = {
-    owner, repo, name: CHECK_NAME, status: 'completed', conclusion: 'failure',
-    details_url: runUrl,
-    output: { title: '正在核对 AI 审查（暂不允许合并）', summary: `当前提交：\`${sha}\`。` },
+  const status = {
+    owner, repo, sha, context: CHECK_NAME, target_url: runUrl,
   };
-  // Completed/failure is intentional while waiting: it cannot accidentally
-  // count as success if the workflow is cancelled or an API request fails.
-  // Each PR event needs a check in its new, eligible workflow suite. Comment
-  // and manual events only update that newest PR check: their own workflow
-  // suites are not eligible to satisfy required GitHub Actions checks.
-  const { data: check } = existing
-    ? await github.rest.checks.update({ ...initial, check_run_id: existing.id })
-    : await github.rest.checks.create({ ...initial, head_sha: sha, external_id: externalId });
+  // Commit statuses are attached directly to this SHA and context, independent
+  // of workflow check suites. Repeated PR, comment, and manual events therefore
+  // replace the same required status instead of leaving an old suite selected.
+  // A cancelled run or API failure leaves pending/failure, never approval.
+  await github.rest.repos.createCommitStatus({
+    ...status, state: 'pending', description: '正在核对当前提交的 AI 审查，暂不允许合并。',
+  });
 
   let result;
   let comment;
@@ -124,17 +106,12 @@ async function run({ github, context, core }) {
     core.warning(`GitHub API error: ${error.status || 'unknown'}`);
     result = block('审查结果校验发生错误，已阻止合并。');
   }
-  const summary = [result.reason, `当前提交：\`${sha}\`。`,
-    '本检查只读取 Codex 已有结果，不额外调用 AI。等待期间显示未通过，收到新结果后自动更新。'];
-  if (comment) summary.push(`[查看 Codex 反馈](${comment.html_url})`);
-  await github.rest.checks.update({
-    owner, repo, check_run_id: check.id, status: 'completed',
-    conclusion: result.conclusion, completed_at: new Date().toISOString(),
-    output: {
-      title: result.conclusion === 'success' ? '当前提交的 AI 审查已通过' : 'AI 审查尚未通过',
-      summary: summary.join('\n\n'),
-    },
+  await github.rest.repos.createCommitStatus({
+    ...status, state: result.conclusion === 'success' ? 'success' : 'failure',
+    description: result.reason.slice(0, 140),
   });
+  core.info(`Current commit: ${sha}`);
+  if (comment) core.info(`Codex feedback: ${comment.html_url}`);
   core.info(result.reason);
 }
 

@@ -91,12 +91,11 @@ test('a concurrent comment edit cannot pass using mismatched API snapshots', () 
   assert.equal(evaluate(data).conclusion, 'failure');
 });
 
-function harness({ latestSha = SHA, apiFails = false, published = true } = {}) {
+function harness({ latestSha = SHA, apiFails = false, publishFails = false } = {}) {
   const data = fixture();
   const writes = [];
   let reads = 0;
   let failed = false;
-  const listForRef = () => {};
   const listComments = () => {};
   const github = {
     rest: {
@@ -105,18 +104,14 @@ function harness({ latestSha = SHA, apiFails = false, published = true } = {}) {
         head: { sha: ++reads === 1 ? SHA : latestSha },
       } }) },
       issues: { listComments },
-      checks: {
-        listForRef,
-        create: async params => { writes.push(params); return { data: { id: 42 } }; },
-        update: async params => { writes.push(params); return { data: { id: 42 } }; },
+      repos: {
+        createCommitStatus: async params => {
+          if (publishFails && params.state !== 'pending') throw new Error('Publication failed');
+          writes.push(params); return { data: {} };
+        },
       },
     },
     paginate: async method => {
-      if (method === listForRef) return published ? [
-        { id: 40, app: { id: 15368 }, external_id: `courseqa-codex-gate:pr:1:${SHA}:target:120:1` },
-        { id: 42, app: { id: 15368 }, external_id: `courseqa-codex-gate:pr:1:${SHA}:target:123:1` },
-        { id: 43, app: { id: 1 }, external_id: `courseqa-codex-gate:pr:1:${SHA}:target:124:1` },
-      ] : [];
       assert.equal(method, listComments);
       if (apiFails) throw Object.assign(new Error('Unavailable'), { status: 503 });
       // A newer human-written copy must never replace the real review.
@@ -132,43 +127,41 @@ function harness({ latestSha = SHA, apiFails = false, published = true } = {}) {
   return { github, context, core, writes, failed: () => failed };
 }
 
-test('every PR event publishes its own eligible check before passing the verified head', async () => {
-  const ids = [];
+test('repeated PR events update the same commit status after verifying the current head', async () => {
+  const contexts = [];
   for (const runId of [123, 124]) {
     const h = harness(); h.context.runId = runId; await run(h);
-    assert.equal(h.writes[0].conclusion, 'failure');
-    assert.equal(h.writes[1].conclusion, 'success');
-    assert.equal(h.writes[1].check_run_id, 42);
-    assert.equal(h.writes[0].head_sha, SHA);
-    assert.equal(h.writes[0].check_run_id, undefined);
-    ids.push(h.writes[0].external_id);
+    assert.equal(h.writes[0].state, 'pending');
+    assert.equal(h.writes[1].state, 'success');
+    assert.ok(h.writes.every(write => write.sha === SHA && write.context === 'codex-review'));
+    contexts.push(h.writes[1].context);
   }
-  assert.notEqual(ids[0], ids[1]);
+  assert.equal(contexts[0], contexts[1]);
 });
 
-test('comment and manual events update the newest eligible PR check instead of creating one', async () => {
+test('comment and manual events refresh the verified SHA without depending on workflow suites', async () => {
   for (const event of ['issue_comment', 'workflow_dispatch']) {
     const h = harness(); h.context.eventName = event; await run(h);
     assert.equal(h.writes.length, 2);
-    assert.ok(h.writes.every(write => write.check_run_id === 42));
-    assert.equal(h.writes[1].conclusion, 'success');
+    assert.ok(h.writes.every(write => write.sha === SHA && write.context === 'codex-review'));
+    assert.equal(h.writes[1].state, 'success');
   }
 });
 
-test('non-PR events cannot manufacture a passing check when the eligible PR run is missing', async () => {
-  const h = harness({ published: false }); h.context.eventName = 'issue_comment';
-  await run(h);
-  assert.equal(h.writes.length, 0);
-  assert.equal(h.failed(), true);
+test('a failed final publication leaves a blocking pending status', async () => {
+  const h = harness({ publishFails: true });
+  await assert.rejects(run(h), /Publication failed/);
+  assert.equal(h.writes.length, 1);
+  assert.equal(h.writes[0].state, 'pending');
 });
 
 test('a push during verification cannot receive an obsolete passing result', async () => {
   const h = harness({ latestSha: 'b'.repeat(40) }); await run(h);
-  assert.ok(h.writes.every(write => write.conclusion === 'failure'));
+  assert.deepEqual(h.writes.map(write => write.state), ['pending', 'failure']);
 });
 
 test('an API outage leaves an explicitly failing check and a failed workflow', async () => {
   const h = harness({ apiFails: true }); await run(h);
-  assert.ok(h.writes.every(write => write.conclusion === 'failure'));
+  assert.deepEqual(h.writes.map(write => write.state), ['pending', 'failure']);
   assert.equal(h.failed(), true);
 });
