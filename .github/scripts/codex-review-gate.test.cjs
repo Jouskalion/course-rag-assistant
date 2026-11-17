@@ -91,12 +91,11 @@ test('a concurrent comment edit cannot pass using mismatched API snapshots', () 
   assert.equal(evaluate(data).conclusion, 'failure');
 });
 
-function harness({ latestSha = SHA, apiFails = false, existing = false } = {}) {
+function harness({ latestSha = SHA, apiFails = false } = {}) {
   const data = fixture();
   const writes = [];
   let reads = 0;
   let failed = false;
-  const listForRef = () => {};
   const listComments = () => {};
   const github = {
     rest: {
@@ -106,15 +105,12 @@ function harness({ latestSha = SHA, apiFails = false, existing = false } = {}) {
       } }) },
       issues: { listComments },
       checks: {
-        listForRef,
         create: async params => { writes.push(params); return { data: { id: 42 } }; },
         update: async params => { writes.push(params); return { data: { id: 42 } }; },
       },
     },
     paginate: async method => {
-      if (method === listForRef) return existing ? [{
-        id: 42, app: { id: 15368 }, external_id: `courseqa-codex-gate:pr:1:${SHA}`,
-      }] : [];
+      assert.equal(method, listComments);
       if (apiFails) throw Object.assign(new Error('Unavailable'), { status: 503 });
       // A newer human-written copy must never replace the real review.
       return [data.comment, { ...data.comment, id: 101, user: { id: 1, type: 'User' } }];
@@ -123,20 +119,24 @@ function harness({ latestSha = SHA, apiFails = false, existing = false } = {}) {
   };
   const context = {
     repo: { owner: 'example', repo: 'project' }, payload: { inputs: { pr_number: '1' } },
-    serverUrl: 'https://github.com', runId: 123,
+    serverUrl: 'https://github.com', runId: 123, runAttempt: 1,
   };
   const core = { info() {}, warning() {}, setFailed() { failed = true; } };
   return { github, context, core, writes, failed: () => failed };
 }
 
-test('the check starts blocked, then passes the verified head, and reuses its own check', async () => {
-  for (const existing of [false, true]) {
-    const h = harness({ existing }); await run(h);
+test('every workflow invocation publishes its own check before passing the verified head', async () => {
+  const ids = [];
+  for (const runId of [123, 124]) {
+    const h = harness(); h.context.runId = runId; await run(h);
     assert.equal(h.writes[0].conclusion, 'failure');
     assert.equal(h.writes[1].conclusion, 'success');
     assert.equal(h.writes[1].check_run_id, 42);
-    if (!existing) assert.equal(h.writes[0].head_sha, SHA);
+    assert.equal(h.writes[0].head_sha, SHA);
+    assert.equal(h.writes[0].check_run_id, undefined);
+    ids.push(h.writes[0].external_id);
   }
+  assert.notEqual(ids[0], ids[1]);
 });
 
 test('a push during verification cannot receive an obsolete passing result', async () => {

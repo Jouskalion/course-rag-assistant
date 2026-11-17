@@ -3,7 +3,6 @@
 const CHECK_NAME = 'codex-review';
 const BOT_ID = 199175422;
 const APP_ID = 1144995;
-const ACTIONS_APP_ID = 15368;
 const BOT_LOGIN = 'chatgpt-codex-connector[bot]';
 const SUMMARY = '<!-- codex-pull-request-review-summary -->';
 
@@ -67,12 +66,7 @@ async function run({ github, context, core }) {
     return;
   }
   const sha = pull.head.sha;
-  const externalId = `courseqa-codex-gate:pr:${pull_number}:${sha}`;
-  const checks = await github.paginate(github.rest.checks.listForRef, {
-    owner, repo, ref: sha, check_name: CHECK_NAME, filter: 'all', per_page: 100,
-  });
-  const existing = checks.filter(c => c.app?.id === ACTIONS_APP_ID
-    && c.external_id === externalId).sort((a, b) => b.id - a.id)[0];
+  const externalId = `courseqa-codex-gate:pr:${pull_number}:${sha}:${context.runId}:${context.runAttempt}`;
   const runUrl = `${context.serverUrl}/${owner}/${repo}/actions/runs/${context.runId}`;
   const initial = {
     owner, repo, name: CHECK_NAME, status: 'completed', conclusion: 'failure',
@@ -81,9 +75,12 @@ async function run({ github, context, core }) {
   };
   // Completed/failure is intentional while waiting: it cannot accidentally
   // count as success if the workflow is cancelled or an API request fails.
-  const { data: check } = existing
-    ? await github.rest.checks.update({ ...initial, check_run_id: existing.id })
-    : await github.rest.checks.create({ ...initial, head_sha: sha, external_id: externalId });
+  // Each workflow invocation needs its own check, associated with that run's
+  // check suite. Updating a previous invocation's completed check can leave
+  // GitHub waiting for the required context in the newest workflow run.
+  const { data: check } = await github.rest.checks.create({
+    ...initial, head_sha: sha, external_id: externalId,
+  });
 
   let result;
   let comment;
