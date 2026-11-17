@@ -10,3 +10,6 @@ backend/config/application-local.yml
 .DS_Store
 Thumbs.db
 .codex/
+
+启动后端.bat
+启动前端.bat
