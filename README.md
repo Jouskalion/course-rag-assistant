@@ -1,2 +1,47 @@
-# course-rag-assistant
-课程资料智能问答系统：四人协作、固定接口与数据库设计、Vue + Java 开发骨架
+# 课程资料智能问答系统
+
+四人开发启动包。A 负责前端，B 负责资料和持久化基础，C 负责向量与检索，D 负责问答和生成模型。
+
+当前可以启动页面骨架、后端健康接口，并初始化 11 张空业务表。业务处理尚未实现，业务接口明确返回 501；没有课程资料、样例数据、模拟回答或完整测试方案。
+
+## 先看这些文件
+
+主方案见 `docs/开发定稿方案.docx`，共八页，按“总方案＋四人设计＋目录分工＋开工约定”组织；详细字段不重复塞入主文档。
+
+1. `docs/START.md`：环境、启动与第一批任务。
+2. `docs/OWNERSHIP.md`：每个人应修改的目录和文件。
+3. `docs/HTTP_API.md`：27 项 HTTP 操作与 35 个数据结构。
+4. `docs/INTERNAL_API.md`：B、C、D 的内部方法和交换类型。
+5. `docs/DATABASE.md`：11 张表、约束、状态和删除规则。
+6. `docs/AI_REVIEW.md`：每次合并前的 AI 审查规则。
+7. `docs/BUILD_STATUS.md`：本启动包实际完成的构建与启动检查。
+
+## 设计依据与修改入口
+
+- HTTP 字段和响应结构以 `contracts/openapi.json` 为准。修改后在仓库根运行 `node scripts/generate-contracts.mjs`；Java DTO 和 TypeScript 类型由它生成，不手改生成文件。
+- 内部方法以 `backend/src/main/java/com/courseqa/contracts/` 下 port 接口与 internal record 为准。
+- 数据库以 `backend/src/main/resources/db/migration/V001__init.sql` 为准。已有真实数据后不改旧迁移；新增结构使用后续版本并由 B 扩展迁移器。
+- `contracts/database.json` 和 `contracts/internal-ports.json` 是当前设计的结构化索引；修改对应定义时同步更新，由 AI 审查一致性。
+- 方案的技术边界为单机、单后端进程、SQLite、Vue、Java。没有用户登录和公开云部署。
+
+## 快速启动
+
+安装 JDK 21 与 Node.js 24.22.3。Maven 由仓库 Wrapper 固定为 3.9.16；不要用本机 JDK 17 编译。
+
+在两个 PowerShell 窗口中分别从仓库根执行：
+
+```powershell
+.\scripts\start-backend.ps1
+```
+
+```powershell
+.\scripts\start-frontend.ps1
+```
+
+打开 `http://127.0.0.1:5173`。后端健康接口为 `http://127.0.0.1:8000/api/v1/health`。如本机限制运行脚本，按 `docs/START.md` 的逐条命令启动，不需要更改系统策略。
+
+第一次安装依赖需要网络。模型地址和密钥暂时留空也可启动骨架；真正的向量化和问答由开发完成后接入。
+
+## 交付状态
+
+已提供结构、类型、方法签名、空库迁移、启动入口、构建配置和协作规则。完整资料管理、检索、模型调用与问答功能由四人继续实现。此包不包含已完成业务或质量评价结果。

@@ -1,0 +1,3243 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "课程资料智能问答系统",
+    "version": "1.0.0",
+    "description": "定案契约。无样例数据。UTF-8 JSON，UTC 时间，码点长度。所有返回字段均出现，允许为空的字段返回 null。请求可选字段省略时用声明默认值，显式 null 不等于省略。"
+  },
+  "servers": [
+    {
+      "url": "http://127.0.0.1:8000/api/v1"
+    }
+  ],
+  "paths": {
+    "/health": {
+      "get": {
+        "operationId": "getHealth",
+        "tags": [
+          "D"
+        ],
+        "summary": "读取启动状态",
+        "x-owner": "D",
+        "responses": {
+          "200": {
+            "description": "操作成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Health"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "请求失败；未实现业务在启动骨架中返回 501 FEATURE_NOT_IMPLEMENTED。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/knowledge-bases": {
+      "get": {
+        "operationId": "listKnowledgeBases",
+        "tags": [
+          "B"
+        ],
+        "summary": "课程列表",
+        "x-owner": "B",
+        "responses": {
+          "200": {
+            "description": "操作成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KnowledgeBaseList"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "请求失败；未实现业务在启动骨架中返回 501 FEATURE_NOT_IMPLEMENTED。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "description": "",
+              "minimum": 1,
+              "maximum": 2147483647,
+              "default": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "description": "",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          }
+        ]
+      },
+      "post": {
+        "operationId": "createKnowledgeBase",
+        "tags": [
+          "B"
+        ],
+        "summary": "创建课程",
+        "x-owner": "B",
+        "responses": {
+          "201": {
+            "description": "操作成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KnowledgeBase"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "请求失败；未实现业务在启动骨架中返回 501 FEATURE_NOT_IMPLEMENTED。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/KnowledgeBaseCreate"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/knowledge-bases/{knowledge_base_id}": {
+      "get": {
+        "operationId": "getKnowledgeBase",
+        "tags": [
+          "B"
+        ],
+        "summary": "读取课程",
+        "x-owner": "B",
+        "responses": {
+          "200": {
+            "description": "操作成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KnowledgeBase"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "请求失败；未实现业务在启动骨架中返回 501 FEATURE_NOT_IMPLEMENTED。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "knowledge_base_id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "业务编号",
+              "format": "uuid"
+            }
+          }
+        ]
+      },
+      "patch": {
+        "operationId": "updateKnowledgeBase",
+        "tags": [
+          "B"
+        ],
+        "summary": "修改名称与说明 两字段均必传",
+        "x-owner": "B",
+        "responses": {
+          "200": {
+            "description": "操作成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KnowledgeBase"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "请求失败；未实现业务在启动骨架中返回 501 FEATURE_NOT_IMPLEMENTED。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "knowledge_base_id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "业务编号",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/KnowledgeBaseUpdate"
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteKnowledgeBase",
+        "tags": [
+          "B"
+        ],
+        "summary": "仅删除空课程",
+        "x-owner": "B",
+        "responses": {
+          "204": {
+            "description": "操作成功"
+          },
+          "default": {
+            "description": "请求失败；未实现业务在启动骨架中返回 501 FEATURE_NOT_IMPLEMENTED。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "knowledge_base_id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "业务编号",
+              "format": "uuid"
+            }
+          }
+        ]
+      }
+    },
+    "/knowledge-bases/{knowledge_base_id}/documents": {
+      "get": {
+        "operationId": "listDocuments",
+        "tags": [
+          "B"
+        ],
+        "summary": "未删除资料列表",
+        "x-owner": "B",
+        "responses": {
+          "200": {
+            "description": "操作成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentList"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "请求失败；未实现业务在启动骨架中返回 501 FEATURE_NOT_IMPLEMENTED。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "knowledge_base_id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "业务编号",
+              "format": "uuid"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "description": "",
+              "minimum": 1,
+              "maximum": 2147483647,
+              "default": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "description": "",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          }
+        ]
+      },
+      "post": {
+        "operationId": "uploadDocument",
+        "tags": [
+          "B"
+        ],
+        "summary": "上传单个 PDF",
+        "x-owner": "B",
+        "responses": {
+          "202": {
+            "description": "操作成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportAccepted"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "相同上传请求的幂等重放",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportAccepted"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "请求失败；未实现业务在启动骨架中返回 501 FEATURE_NOT_IMPLEMENTED。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "knowledge_base_id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "业务编号",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "file",
+                  "client_request_id"
+                ],
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "文字 PDF 1 至 20971520 字节"
+                  },
+                  "client_request_id": {
+                    "type": "string",
+                    "description": "业务编号",
+                    "format": "uuid"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/documents/{document_id}": {
+      "get": {
+        "operationId": "getDocument",
+        "tags": [
+          "B"
+        ],
+        "summary": "读取资料 含删除墓碑",
+        "x-owner": "B",
+        "responses": {
+          "200": {
+            "description": "操作成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Document"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "请求失败；未实现业务在启动骨架中返回 501 FEATURE_NOT_IMPLEMENTED。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "document_id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "业务编号",
+              "format": "uuid"
+            }
+          }
+        ]
+      },
+      "patch": {
+        "operationId": "updateDocument",
+        "tags": [
+          "B"
+        ],
+        "summary": "启用或停用 ready 资料",
+        "x-owner": "B",
+        "responses": {
+          "200": {
+            "description": "操作成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Document"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "请求失败；未实现业务在启动骨架中返回 501 FEATURE_NOT_IMPLEMENTED。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "document_id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "业务编号",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DocumentUpdate"
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteDocument",
+        "tags": [
+          "B"
+        ],
+        "summary": "退出检索并异步清理",
+        "x-owner": "B",
+        "responses": {
+          "202": {
+            "description": "操作成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Document"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "此前已删除或已在清理",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Document"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "请求失败；未实现业务在启动骨架中返回 501 FEATURE_NOT_IMPLEMENTED。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "document_id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "业务编号",
+              "format": "uuid"
+            }
+          }
+        ]
+      }
+    },
+    "/documents/{document_id}/chunks": {
+      "get": {
+        "operationId": "listChunks",
+        "tags": [
+          "B"
+        ],
+        "summary": "预览已保存片段",
+        "x-owner": "B",
+        "responses": {
+          "200": {
+            "description": "操作成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChunkList"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "请求失败；未实现业务在启动骨架中返回 501 FEATURE_NOT_IMPLEMENTED。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "document_id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "业务编号",
+              "format": "uuid"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "description": "",
+              "minimum": 1,
+              "maximum": 2147483647,
+              "default": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "description": "",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          }
+        ]
+      }
+    },
+    "/documents/{document_id}/pages/{page_no}": {
+      "get": {
+        "operationId": "getDocumentPage",
+        "tags": [
+          "B"
+        ],
+        "summary": "读取一页提取文字",
+        "x-owner": "B",
+        "responses": {
+          "200": {
+            "description": "操作成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentPage"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "请求失败；未实现业务在启动骨架中返回 501 FEATURE_NOT_IMPLEMENTED。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "document_id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "业务编号",
+              "format": "uuid"
+            }
+          },
+          {
+            "in": "path",
+            "name": "page_no",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "description": "",
+              "minimum": 1
+            }
+          }
+        ]
+      }
+    },
+    "/documents/{document_id}/file": {
+      "get": {
+        "operationId": "getDocumentFile",
+        "tags": [
+          "B"
+        ],
+        "summary": "完整读取原 PDF 不实现 Range",
+        "x-owner": "B",
+        "responses": {
+          "200": {
+            "description": "操作成功",
+            "content": {
+              "application/pdf": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "请求失败；未实现业务在启动骨架中返回 501 FEATURE_NOT_IMPLEMENTED。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "document_id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "业务编号",
+              "format": "uuid"
+            }
+          }
+        ]
+      }
+    },
+    "/documents/{document_id}/retry": {
+      "post": {
+        "operationId": "retryDocument",
+        "tags": [
+          "B"
+        ],
+        "summary": "重试 failed interrupted 导入；deleting 则继续清理",
+        "x-owner": "B",
+        "responses": {
+          "202": {
+            "description": "操作成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Document"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "已有活动任务或清理已完成 返回资料及 active_job_id",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Document"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "请求失败；未实现业务在启动骨架中返回 501 FEATURE_NOT_IMPLEMENTED。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "document_id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "业务编号",
+              "format": "uuid"
+            }
+          }
+        ]
+      }
+    },
+    "/import-jobs/{job_id}": {
+      "get": {
+        "operationId": "getImportJob",
+        "tags": [
+          "B"
+        ],
+        "summary": "导入进度",
+        "x-owner": "B",
+        "responses": {
+          "200": {
+            "description": "操作成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportJob"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "请求失败；未实现业务在启动骨架中返回 501 FEATURE_NOT_IMPLEMENTED。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "业务编号",
+              "format": "uuid"
+            }
+          }
+        ]
+      }
+    },
+    "/conversations": {
+      "get": {
+        "operationId": "listConversations",
+        "tags": [
+          "D"
+        ],
+        "summary": "按课程列出会话",
+        "x-owner": "D",
+        "responses": {
+          "200": {
+            "description": "操作成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConversationList"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "请求失败；未实现业务在启动骨架中返回 501 FEATURE_NOT_IMPLEMENTED。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "description": "",
+              "minimum": 1,
+              "maximum": 2147483647,
+              "default": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "description": "",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          },
+          {
+            "in": "query",
+            "name": "knowledge_base_id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "业务编号",
+              "format": "uuid"
+            }
+          }
+        ]
+      },
+      "post": {
+        "operationId": "createConversation",
+        "tags": [
+          "D"
+        ],
+        "summary": "创建固定资料范围会话",
+        "x-owner": "D",
+        "responses": {
+          "201": {
+            "description": "操作成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Conversation"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "请求失败；未实现业务在启动骨架中返回 501 FEATURE_NOT_IMPLEMENTED。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConversationCreate"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/conversations/{conversation_id}": {
+      "get": {
+        "operationId": "getConversation",
+        "tags": [
+          "D"
+        ],
+        "summary": "读取会话与失效资料",
+        "x-owner": "D",
+        "responses": {
+          "200": {
+            "description": "操作成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Conversation"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "请求失败；未实现业务在启动骨架中返回 501 FEATURE_NOT_IMPLEMENTED。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "conversation_id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "业务编号",
+              "format": "uuid"
+            }
+          }
+        ]
+      },
+      "patch": {
+        "operationId": "updateConversation",
+        "tags": [
+          "D"
+        ],
+        "summary": "修改标题",
+        "x-owner": "D",
+        "responses": {
+          "200": {
+            "description": "操作成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Conversation"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "请求失败；未实现业务在启动骨架中返回 501 FEATURE_NOT_IMPLEMENTED。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "conversation_id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "业务编号",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConversationUpdate"
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteConversation",
+        "tags": [
+          "D"
+        ],
+        "summary": "无活动问答时删除会话",
+        "x-owner": "D",
+        "responses": {
+          "204": {
+            "description": "操作成功"
+          },
+          "default": {
+            "description": "请求失败；未实现业务在启动骨架中返回 501 FEATURE_NOT_IMPLEMENTED。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "conversation_id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "业务编号",
+              "format": "uuid"
+            }
+          }
+        ]
+      }
+    },
+    "/conversations/{conversation_id}/turns": {
+      "get": {
+        "operationId": "listTurns",
+        "tags": [
+          "D"
+        ],
+        "summary": "会话历史 按创建时间升序",
+        "x-owner": "D",
+        "responses": {
+          "200": {
+            "description": "操作成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TurnList"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "请求失败；未实现业务在启动骨架中返回 501 FEATURE_NOT_IMPLEMENTED。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "conversation_id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "业务编号",
+              "format": "uuid"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "description": "",
+              "minimum": 1,
+              "maximum": 2147483647,
+              "default": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "description": "",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          }
+        ]
+      },
+      "post": {
+        "operationId": "createTurn",
+        "tags": [
+          "D"
+        ],
+        "summary": "异步提问",
+        "x-owner": "D",
+        "responses": {
+          "202": {
+            "description": "操作成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Turn"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "同一编号相同内容的幂等重放",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Turn"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "请求失败；未实现业务在启动骨架中返回 501 FEATURE_NOT_IMPLEMENTED。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "conversation_id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "业务编号",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TurnCreate"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/turns/{turn_id}": {
+      "get": {
+        "operationId": "getTurn",
+        "tags": [
+          "D"
+        ],
+        "summary": "问答状态与结果",
+        "x-owner": "D",
+        "responses": {
+          "200": {
+            "description": "操作成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Turn"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "请求失败；未实现业务在启动骨架中返回 501 FEATURE_NOT_IMPLEMENTED。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "turn_id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "业务编号",
+              "format": "uuid"
+            }
+          }
+        ]
+      }
+    },
+    "/turns/{turn_id}/retry": {
+      "post": {
+        "operationId": "retryTurn",
+        "tags": [
+          "D"
+        ],
+        "summary": "主动重试 创建新记录并保留原记录",
+        "x-owner": "D",
+        "responses": {
+          "202": {
+            "description": "操作成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Turn"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "重试请求的幂等重放",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Turn"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "请求失败；未实现业务在启动骨架中返回 501 FEATURE_NOT_IMPLEMENTED。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "turn_id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "业务编号",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TurnRetry"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/turns/{turn_id}/feedback": {
+      "put": {
+        "operationId": "putFeedback",
+        "tags": [
+          "D"
+        ],
+        "summary": "修改 answered 回答的共享反馈",
+        "x-owner": "D",
+        "responses": {
+          "200": {
+            "description": "操作成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Feedback"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "请求失败；未实现业务在启动骨架中返回 501 FEATURE_NOT_IMPLEMENTED。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "turn_id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "业务编号",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FeedbackWrite"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/retrieval/search": {
+      "post": {
+        "operationId": "search",
+        "tags": [
+          "C"
+        ],
+        "summary": "检索调试 复用正式检索实现",
+        "x-owner": "C",
+        "responses": {
+          "200": {
+            "description": "操作成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchResult"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "请求失败；未实现业务在启动骨架中返回 501 FEATURE_NOT_IMPLEMENTED。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchRequest"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "FieldError": {
+        "type": "object",
+        "description": "字段错误",
+        "additionalProperties": false,
+        "required": [
+          "field",
+          "message"
+        ],
+        "properties": {
+          "field": {
+            "type": "string",
+            "description": "字段路径"
+          },
+          "message": {
+            "type": "string",
+            "description": "原因"
+          }
+        },
+        "x-owner": "D"
+      },
+      "ApiError": {
+        "type": "object",
+        "description": "错误主体",
+        "additionalProperties": false,
+        "required": [
+          "code",
+          "message",
+          "retryable",
+          "details"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "固定错误码",
+            "enum": [
+              "INVALID_REQUEST",
+              "NOT_FOUND",
+              "METHOD_NOT_ALLOWED",
+              "UNSUPPORTED_MEDIA_TYPE",
+              "KNOWLEDGE_BASE_NOT_EMPTY",
+              "EMPTY_SCOPE",
+              "SCOPE_MISMATCH",
+              "SOURCE_UNAVAILABLE",
+              "FILE_TOO_LARGE",
+              "INVALID_PDF",
+              "DOCUMENT_LIMIT_EXCEEDED",
+              "DOCUMENT_NOT_READY",
+              "IDEMPOTENCY_CONFLICT",
+              "CONVERSATION_BUSY",
+              "IMPORT_NOT_RETRYABLE",
+              "TURN_NOT_RETRYABLE",
+              "MODEL_NOT_CONFIGURED",
+              "EMBEDDING_MODEL_MISMATCH",
+              "PDF_TOO_MANY_PAGES",
+              "PDF_ENCRYPTED",
+              "PDF_NO_TEXT",
+              "PDF_PARSE_FAILED",
+              "CHUNK_LIMIT_EXCEEDED",
+              "EMBEDDING_FAILED",
+              "MODEL_AUTH_FAILED",
+              "MODEL_RATE_LIMITED",
+              "MODEL_TIMEOUT",
+              "MODEL_UNAVAILABLE",
+              "MODEL_OUTPUT_INVALID",
+              "CITATION_INVALID",
+              "TASK_INTERRUPTED",
+              "DELETE_FAILED",
+              "FEATURE_NOT_IMPLEMENTED",
+              "INTERNAL_ERROR"
+            ]
+          },
+          "message": {
+            "type": "string",
+            "description": "面向用户的说明"
+          },
+          "retryable": {
+            "type": "boolean",
+            "description": "是否允许主动重试"
+          },
+          "details": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FieldError"
+            },
+            "description": "字段错误，没有时为空数组"
+          }
+        },
+        "x-owner": "D"
+      },
+      "ErrorEnvelope": {
+        "type": "object",
+        "description": "HTTP 请求失败",
+        "additionalProperties": false,
+        "required": [
+          "error",
+          "request_id"
+        ],
+        "properties": {
+          "error": {
+            "$ref": "#/components/schemas/ApiError"
+          },
+          "request_id": {
+            "type": "string",
+            "description": "本次 HTTP 请求编号",
+            "format": "uuid"
+          }
+        },
+        "x-owner": "D"
+      },
+      "Health": {
+        "type": "object",
+        "description": "启动状态",
+        "additionalProperties": false,
+        "required": [
+          "status",
+          "version",
+          "application_stage",
+          "database_ready",
+          "model_configured"
+        ],
+        "properties": {
+          "status": {
+            "type": "string",
+            "description": "",
+            "enum": [
+              "ok"
+            ]
+          },
+          "version": {
+            "type": "string",
+            "description": "工程版本"
+          },
+          "application_stage": {
+            "type": "string",
+            "description": "",
+            "enum": [
+              "skeleton",
+              "application"
+            ]
+          },
+          "database_ready": {
+            "type": "boolean",
+            "description": ""
+          },
+          "model_configured": {
+            "type": "boolean",
+            "description": "Base URL 与密钥均非空"
+          }
+        },
+        "x-owner": "D"
+      },
+      "KnowledgeBaseCreate": {
+        "type": "object",
+        "description": "新建课程",
+        "additionalProperties": false,
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "去掉首尾空白后 1 至 80 码点",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "description": {
+            "type": "string",
+            "description": "说明",
+            "maxLength": 500,
+            "default": ""
+          }
+        },
+        "x-owner": "B"
+      },
+      "KnowledgeBaseUpdate": {
+        "type": "object",
+        "description": "修改课程 使用完整字段更新",
+        "additionalProperties": false,
+        "required": [
+          "name",
+          "description"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "名称",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "description": {
+            "type": "string",
+            "description": "说明",
+            "maxLength": 500
+          }
+        },
+        "x-owner": "B"
+      },
+      "KnowledgeBase": {
+        "type": "object",
+        "description": "课程",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "name",
+          "description",
+          "embedding_model",
+          "embedding_dimensions",
+          "document_count",
+          "ready_document_count",
+          "ready_chunk_count",
+          "reserved_chunk_count",
+          "created_at",
+          "updated_at"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "业务编号",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "description": ""
+          },
+          "description": {
+            "type": "string",
+            "description": ""
+          },
+          "embedding_model": {
+            "type": "string",
+            "description": ""
+          },
+          "embedding_dimensions": {
+            "type": "integer",
+            "description": ""
+          },
+          "document_count": {
+            "type": "integer",
+            "description": "未删除资料数"
+          },
+          "ready_document_count": {
+            "type": "integer",
+            "description": "ready 且 enabled 的资料数"
+          },
+          "ready_chunk_count": {
+            "type": "integer",
+            "description": "所有 ready 资料片段数 包括已停用"
+          },
+          "reserved_chunk_count": {
+            "type": "integer",
+            "description": "导入预留片段数"
+          },
+          "created_at": {
+            "type": "string",
+            "description": "UTC ISO 8601 时间",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "description": "UTC ISO 8601 时间",
+            "format": "date-time"
+          }
+        },
+        "x-owner": "B"
+      },
+      "DocumentWarning": {
+        "type": "object",
+        "description": "解析提示",
+        "additionalProperties": false,
+        "required": [
+          "code",
+          "page_no",
+          "message"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "",
+            "enum": [
+              "EMPTY_PAGE",
+              "LOW_TEXT"
+            ]
+          },
+          "page_no": {
+            "type": "integer",
+            "description": "PDF 实际页序",
+            "minimum": 1
+          },
+          "message": {
+            "type": "string",
+            "description": ""
+          }
+        },
+        "x-owner": "B"
+      },
+      "Document": {
+        "type": "object",
+        "description": "课程资料",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "knowledge_base_id",
+          "file_name",
+          "file_size_bytes",
+          "page_count",
+          "chunk_count",
+          "status",
+          "enabled",
+          "warnings",
+          "error",
+          "active_job_id",
+          "created_at",
+          "updated_at",
+          "deleted_at"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "业务编号",
+            "format": "uuid"
+          },
+          "knowledge_base_id": {
+            "type": "string",
+            "description": "业务编号",
+            "format": "uuid"
+          },
+          "file_name": {
+            "type": "string",
+            "description": ""
+          },
+          "file_size_bytes": {
+            "type": "integer",
+            "description": ""
+          },
+          "page_count": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": ""
+          },
+          "chunk_count": {
+            "type": "integer",
+            "description": ""
+          },
+          "status": {
+            "type": "string",
+            "description": "",
+            "enum": [
+              "queued",
+              "parsing",
+              "indexing",
+              "ready",
+              "failed",
+              "interrupted",
+              "deleting",
+              "deleted"
+            ]
+          },
+          "enabled": {
+            "type": "boolean",
+            "description": ""
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DocumentWarning"
+            },
+            "description": ""
+          },
+          "error": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ApiError"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "active_job_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "业务编号",
+            "format": "uuid"
+          },
+          "created_at": {
+            "type": "string",
+            "description": "UTC ISO 8601 时间",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "description": "UTC ISO 8601 时间",
+            "format": "date-time"
+          },
+          "deleted_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "UTC ISO 8601 时间",
+            "format": "date-time"
+          }
+        },
+        "x-owner": "B"
+      },
+      "DocumentUpdate": {
+        "type": "object",
+        "description": "启用或停用",
+        "additionalProperties": false,
+        "required": [
+          "enabled"
+        ],
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "description": ""
+          }
+        },
+        "x-owner": "B"
+      },
+      "ImportJob": {
+        "type": "object",
+        "description": "导入进度",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "document_id",
+          "status",
+          "stage",
+          "pages_processed",
+          "pages_total",
+          "chunks_embedded",
+          "chunks_total",
+          "error",
+          "created_at",
+          "started_at",
+          "finished_at"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "业务编号",
+            "format": "uuid"
+          },
+          "document_id": {
+            "type": "string",
+            "description": "业务编号",
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string",
+            "description": "",
+            "enum": [
+              "queued",
+              "running",
+              "completed",
+              "failed",
+              "interrupted",
+              "cancelled"
+            ]
+          },
+          "stage": {
+            "type": "string",
+            "description": "",
+            "enum": [
+              "queued",
+              "parsing",
+              "indexing",
+              "publishing",
+              "finished"
+            ]
+          },
+          "pages_processed": {
+            "type": "integer",
+            "description": ""
+          },
+          "pages_total": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": ""
+          },
+          "chunks_embedded": {
+            "type": "integer",
+            "description": ""
+          },
+          "chunks_total": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": ""
+          },
+          "error": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ApiError"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "created_at": {
+            "type": "string",
+            "description": "UTC ISO 8601 时间",
+            "format": "date-time"
+          },
+          "started_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "UTC ISO 8601 时间",
+            "format": "date-time"
+          },
+          "finished_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "UTC ISO 8601 时间",
+            "format": "date-time"
+          }
+        },
+        "x-owner": "B"
+      },
+      "ImportAccepted": {
+        "type": "object",
+        "description": "上传或重试响应",
+        "additionalProperties": false,
+        "required": [
+          "document",
+          "job"
+        ],
+        "properties": {
+          "document": {
+            "$ref": "#/components/schemas/Document"
+          },
+          "job": {
+            "$ref": "#/components/schemas/ImportJob"
+          }
+        },
+        "x-owner": "B"
+      },
+      "DocumentPage": {
+        "type": "object",
+        "description": "单页提取文字",
+        "additionalProperties": false,
+        "required": [
+          "document_id",
+          "page_no",
+          "text",
+          "char_count",
+          "extraction_status"
+        ],
+        "properties": {
+          "document_id": {
+            "type": "string",
+            "description": "业务编号",
+            "format": "uuid"
+          },
+          "page_no": {
+            "type": "integer",
+            "description": "",
+            "minimum": 1
+          },
+          "text": {
+            "type": "string",
+            "description": ""
+          },
+          "char_count": {
+            "type": "integer",
+            "description": ""
+          },
+          "extraction_status": {
+            "type": "string",
+            "description": "",
+            "enum": [
+              "text",
+              "low_text",
+              "empty"
+            ]
+          }
+        },
+        "x-owner": "B"
+      },
+      "Chunk": {
+        "type": "object",
+        "description": "文本片段",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "document_id",
+          "knowledge_base_id",
+          "ordinal",
+          "page_no",
+          "char_start",
+          "char_end",
+          "text"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "业务编号",
+            "format": "uuid"
+          },
+          "document_id": {
+            "type": "string",
+            "description": "业务编号",
+            "format": "uuid"
+          },
+          "knowledge_base_id": {
+            "type": "string",
+            "description": "业务编号",
+            "format": "uuid"
+          },
+          "ordinal": {
+            "type": "integer",
+            "description": "资料内从 0 开始"
+          },
+          "page_no": {
+            "type": "integer",
+            "description": "",
+            "minimum": 1
+          },
+          "char_start": {
+            "type": "integer",
+            "description": "码点偏移 左闭",
+            "minimum": 0
+          },
+          "char_end": {
+            "type": "integer",
+            "description": "码点偏移 右开",
+            "minimum": 1
+          },
+          "text": {
+            "type": "string",
+            "description": "精确对应页文本切片",
+            "maxLength": 1000
+          }
+        },
+        "x-owner": "B"
+      },
+      "ConversationCreate": {
+        "type": "object",
+        "description": "创建固定范围会话 scope=all 时不传 document_ids selected 时必须非空",
+        "additionalProperties": false,
+        "required": [
+          "knowledge_base_id",
+          "scope"
+        ],
+        "properties": {
+          "knowledge_base_id": {
+            "type": "string",
+            "description": "业务编号",
+            "format": "uuid"
+          },
+          "scope": {
+            "type": "string",
+            "description": "",
+            "enum": [
+              "all",
+              "selected"
+            ]
+          },
+          "document_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "description": "业务编号",
+              "format": "uuid"
+            },
+            "description": "",
+            "minItems": 1,
+            "maxItems": 100,
+            "uniqueItems": true
+          },
+          "title": {
+            "type": "string",
+            "description": "不传时固定为 新会话",
+            "minLength": 1,
+            "maxLength": 80,
+            "default": "新会话"
+          }
+        },
+        "x-owner": "D",
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "scope": {
+                  "const": "all"
+                }
+              }
+            },
+            "then": {
+              "not": {
+                "required": [
+                  "document_ids"
+                ]
+              }
+            },
+            "else": {
+              "required": [
+                "document_ids"
+              ]
+            }
+          }
+        ]
+      },
+      "ConversationUpdate": {
+        "type": "object",
+        "description": "修改会话标题",
+        "additionalProperties": false,
+        "required": [
+          "title"
+        ],
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "",
+            "minLength": 1,
+            "maxLength": 80
+          }
+        },
+        "x-owner": "D"
+      },
+      "Conversation": {
+        "type": "object",
+        "description": "会话及固定范围",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "knowledge_base_id",
+          "title",
+          "scope",
+          "document_ids",
+          "unavailable_document_ids",
+          "active_turn_id",
+          "created_at",
+          "updated_at"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "业务编号",
+            "format": "uuid"
+          },
+          "knowledge_base_id": {
+            "type": "string",
+            "description": "业务编号",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string",
+            "description": ""
+          },
+          "scope": {
+            "type": "string",
+            "description": "",
+            "enum": [
+              "all",
+              "selected"
+            ]
+          },
+          "document_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "description": "业务编号",
+              "format": "uuid"
+            },
+            "description": "",
+            "minItems": 1
+          },
+          "unavailable_document_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "description": "业务编号",
+              "format": "uuid"
+            },
+            "description": ""
+          },
+          "active_turn_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "业务编号",
+            "format": "uuid"
+          },
+          "created_at": {
+            "type": "string",
+            "description": "UTC ISO 8601 时间",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "description": "UTC ISO 8601 时间",
+            "format": "date-time"
+          }
+        },
+        "x-owner": "D"
+      },
+      "TurnCreate": {
+        "type": "object",
+        "description": "提交问题",
+        "additionalProperties": false,
+        "required": [
+          "client_request_id",
+          "question"
+        ],
+        "properties": {
+          "client_request_id": {
+            "type": "string",
+            "description": "客户端重传必须复用",
+            "format": "uuid"
+          },
+          "question": {
+            "type": "string",
+            "description": "去除首尾空白后的问题",
+            "minLength": 1,
+            "maxLength": 2000
+          },
+          "strategy": {
+            "type": "string",
+            "description": "检索策略",
+            "enum": [
+              "bm25",
+              "dense",
+              "hybrid"
+            ],
+            "default": "hybrid"
+          },
+          "top_k": {
+            "type": "integer",
+            "description": "最终片段数",
+            "minimum": 1,
+            "maximum": 10,
+            "default": 6
+          }
+        },
+        "x-owner": "D"
+      },
+      "TurnRetry": {
+        "type": "object",
+        "description": "主动重试 必须使用新的请求编号",
+        "additionalProperties": false,
+        "required": [
+          "client_request_id"
+        ],
+        "properties": {
+          "client_request_id": {
+            "type": "string",
+            "description": "业务编号",
+            "format": "uuid"
+          }
+        },
+        "x-owner": "D"
+      },
+      "AnswerBlock": {
+        "type": "object",
+        "description": "回答段落",
+        "additionalProperties": false,
+        "required": [
+          "text",
+          "citation_ids"
+        ],
+        "properties": {
+          "text": {
+            "type": "string",
+            "description": "",
+            "minLength": 1
+          },
+          "citation_ids": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "description": "",
+              "minimum": 1
+            },
+            "description": "",
+            "minItems": 1,
+            "uniqueItems": true
+          }
+        },
+        "x-owner": "D"
+      },
+      "Citation": {
+        "type": "object",
+        "description": "真实引用快照",
+        "additionalProperties": false,
+        "required": [
+          "citation_id",
+          "document_id",
+          "chunk_id",
+          "file_name",
+          "page_no",
+          "excerpt",
+          "source_available"
+        ],
+        "properties": {
+          "citation_id": {
+            "type": "integer",
+            "description": "本轮显示编号 从 1 开始",
+            "minimum": 1
+          },
+          "document_id": {
+            "type": "string",
+            "description": "业务编号",
+            "format": "uuid"
+          },
+          "chunk_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "业务编号",
+            "format": "uuid"
+          },
+          "file_name": {
+            "type": "string",
+            "description": ""
+          },
+          "page_no": {
+            "type": "integer",
+            "description": "",
+            "minimum": 1
+          },
+          "excerpt": {
+            "type": "string",
+            "description": "完整原片段",
+            "maxLength": 1000
+          },
+          "source_available": {
+            "type": "boolean",
+            "description": "原 PDF 当前能否打开"
+          }
+        },
+        "x-owner": "D"
+      },
+      "Timings": {
+        "type": "object",
+        "description": "阶段耗时 毫秒 未知为 null",
+        "additionalProperties": false,
+        "required": [
+          "queue_ms",
+          "rewrite_ms",
+          "query_embedding_ms",
+          "retrieval_ms",
+          "generation_ms",
+          "validation_ms",
+          "total_ms"
+        ],
+        "properties": {
+          "queue_ms": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "",
+            "minimum": 0
+          },
+          "rewrite_ms": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "",
+            "minimum": 0
+          },
+          "query_embedding_ms": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "",
+            "minimum": 0
+          },
+          "retrieval_ms": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "",
+            "minimum": 0
+          },
+          "generation_ms": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "",
+            "minimum": 0
+          },
+          "validation_ms": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "",
+            "minimum": 0
+          },
+          "total_ms": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "",
+            "minimum": 0
+          }
+        },
+        "x-owner": "D"
+      },
+      "TokenUsage": {
+        "type": "object",
+        "description": "实际用量 未知为空 未调用的阶段终态记 0",
+        "additionalProperties": false,
+        "required": [
+          "rewrite_input_tokens",
+          "rewrite_output_tokens",
+          "query_embedding_input_tokens",
+          "generation_input_tokens",
+          "generation_output_tokens",
+          "total_tokens"
+        ],
+        "properties": {
+          "rewrite_input_tokens": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "",
+            "minimum": 0
+          },
+          "rewrite_output_tokens": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "",
+            "minimum": 0
+          },
+          "query_embedding_input_tokens": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "",
+            "minimum": 0
+          },
+          "generation_input_tokens": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "",
+            "minimum": 0
+          },
+          "generation_output_tokens": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "",
+            "minimum": 0
+          },
+          "total_tokens": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "",
+            "minimum": 0
+          }
+        },
+        "x-owner": "D"
+      },
+      "ModelSettings": {
+        "type": "object",
+        "description": "模型配置与真实返回名称",
+        "additionalProperties": false,
+        "required": [
+          "generation_model",
+          "actual_generation_model",
+          "embedding_model",
+          "actual_embedding_model",
+          "embedding_dimensions",
+          "temperature",
+          "max_output_tokens",
+          "enable_thinking"
+        ],
+        "properties": {
+          "generation_model": {
+            "type": "string",
+            "description": ""
+          },
+          "actual_generation_model": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": ""
+          },
+          "embedding_model": {
+            "type": "string",
+            "description": ""
+          },
+          "actual_embedding_model": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": ""
+          },
+          "embedding_dimensions": {
+            "type": "integer",
+            "description": ""
+          },
+          "temperature": {
+            "type": "number",
+            "description": ""
+          },
+          "max_output_tokens": {
+            "type": "integer",
+            "description": ""
+          },
+          "enable_thinking": {
+            "type": "boolean",
+            "description": ""
+          }
+        },
+        "x-owner": "D"
+      },
+      "FeedbackWrite": {
+        "type": "object",
+        "description": "每个回答一条可修改的共享反馈",
+        "additionalProperties": false,
+        "required": [
+          "rating",
+          "reason",
+          "comment"
+        ],
+        "properties": {
+          "rating": {
+            "type": "string",
+            "description": "",
+            "enum": [
+              "up",
+              "down"
+            ]
+          },
+          "reason": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "",
+            "enum": [
+              "helpful",
+              "incorrect",
+              "unsupported",
+              "missing_information",
+              "other"
+            ]
+          },
+          "comment": {
+            "type": "string",
+            "description": "",
+            "maxLength": 1000
+          }
+        },
+        "x-owner": "D"
+      },
+      "Feedback": {
+        "type": "object",
+        "description": "已保存反馈",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "turn_id",
+          "rating",
+          "reason",
+          "comment",
+          "created_at",
+          "updated_at"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "业务编号",
+            "format": "uuid"
+          },
+          "turn_id": {
+            "type": "string",
+            "description": "业务编号",
+            "format": "uuid"
+          },
+          "rating": {
+            "type": "string",
+            "description": "",
+            "enum": [
+              "up",
+              "down"
+            ]
+          },
+          "reason": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "",
+            "enum": [
+              "helpful",
+              "incorrect",
+              "unsupported",
+              "missing_information",
+              "other"
+            ]
+          },
+          "comment": {
+            "type": "string",
+            "description": ""
+          },
+          "created_at": {
+            "type": "string",
+            "description": "UTC ISO 8601 时间",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "description": "UTC ISO 8601 时间",
+            "format": "date-time"
+          }
+        },
+        "x-owner": "D"
+      },
+      "SearchHit": {
+        "type": "object",
+        "description": "来源与三种分数 缺失的分数为空",
+        "additionalProperties": false,
+        "required": [
+          "source_id",
+          "chunk_id",
+          "document_id",
+          "file_name",
+          "page_no",
+          "char_start",
+          "char_end",
+          "text",
+          "bm25_rank",
+          "dense_rank",
+          "bm25_score",
+          "dense_score",
+          "rrf_score"
+        ],
+        "properties": {
+          "source_id": {
+            "type": "string",
+            "description": "仅本次请求有效 S1 S2 等",
+            "pattern": "^S[1-9][0-9]*$"
+          },
+          "chunk_id": {
+            "type": "string",
+            "description": "业务编号",
+            "format": "uuid"
+          },
+          "document_id": {
+            "type": "string",
+            "description": "业务编号",
+            "format": "uuid"
+          },
+          "file_name": {
+            "type": "string",
+            "description": ""
+          },
+          "page_no": {
+            "type": "integer",
+            "description": "",
+            "minimum": 1
+          },
+          "char_start": {
+            "type": "integer",
+            "description": ""
+          },
+          "char_end": {
+            "type": "integer",
+            "description": ""
+          },
+          "text": {
+            "type": "string",
+            "description": "",
+            "maxLength": 1000
+          },
+          "bm25_rank": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "",
+            "minimum": 1
+          },
+          "dense_rank": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "",
+            "minimum": 1
+          },
+          "bm25_score": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": ""
+          },
+          "dense_score": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "",
+            "minimum": -1,
+            "maximum": 1
+          },
+          "rrf_score": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": ""
+          }
+        },
+        "x-owner": "C"
+      },
+      "SearchRequest": {
+        "type": "object",
+        "description": "检索调试 固定传入具体资料集合",
+        "additionalProperties": false,
+        "required": [
+          "knowledge_base_id",
+          "document_ids",
+          "query",
+          "strategy"
+        ],
+        "properties": {
+          "knowledge_base_id": {
+            "type": "string",
+            "description": "业务编号",
+            "format": "uuid"
+          },
+          "document_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "description": "业务编号",
+              "format": "uuid"
+            },
+            "description": "",
+            "minItems": 1,
+            "maxItems": 100,
+            "uniqueItems": true
+          },
+          "query": {
+            "type": "string",
+            "description": "",
+            "minLength": 1,
+            "maxLength": 2000
+          },
+          "strategy": {
+            "type": "string",
+            "description": "检索策略",
+            "enum": [
+              "bm25",
+              "dense",
+              "hybrid"
+            ]
+          },
+          "top_k": {
+            "type": "integer",
+            "description": "",
+            "minimum": 1,
+            "maximum": 10,
+            "default": 6
+          }
+        },
+        "x-owner": "C"
+      },
+      "SearchResult": {
+        "type": "object",
+        "description": "同一检索服务供调试与问答使用",
+        "additionalProperties": false,
+        "required": [
+          "query",
+          "strategy",
+          "document_ids",
+          "top_k",
+          "hits",
+          "query_embedding_ms",
+          "retrieval_ms",
+          "query_embedding_input_tokens",
+          "actual_embedding_model"
+        ],
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": ""
+          },
+          "strategy": {
+            "type": "string",
+            "description": "检索策略",
+            "enum": [
+              "bm25",
+              "dense",
+              "hybrid"
+            ]
+          },
+          "document_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "description": "业务编号",
+              "format": "uuid"
+            },
+            "description": ""
+          },
+          "top_k": {
+            "type": "integer",
+            "description": ""
+          },
+          "hits": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SearchHit"
+            },
+            "description": ""
+          },
+          "query_embedding_ms": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": ""
+          },
+          "retrieval_ms": {
+            "type": "number",
+            "description": ""
+          },
+          "query_embedding_input_tokens": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": ""
+          },
+          "actual_embedding_model": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": ""
+          }
+        },
+        "x-owner": "C"
+      },
+      "Turn": {
+        "type": "object",
+        "description": "一次异步问答 answered 时段落和引用非空 其他终态段落为空",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "conversation_id",
+          "client_request_id",
+          "retry_of_turn_id",
+          "question",
+          "standalone_question",
+          "strategy",
+          "top_k",
+          "status",
+          "answer_blocks",
+          "citations",
+          "message",
+          "error",
+          "retrieval",
+          "timings",
+          "token_usage",
+          "model_settings",
+          "feedback",
+          "created_at",
+          "updated_at",
+          "finished_at"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "业务编号",
+            "format": "uuid"
+          },
+          "conversation_id": {
+            "type": "string",
+            "description": "业务编号",
+            "format": "uuid"
+          },
+          "client_request_id": {
+            "type": "string",
+            "description": "业务编号",
+            "format": "uuid"
+          },
+          "retry_of_turn_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "业务编号",
+            "format": "uuid"
+          },
+          "question": {
+            "type": "string",
+            "description": ""
+          },
+          "standalone_question": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": ""
+          },
+          "strategy": {
+            "type": "string",
+            "description": "检索策略",
+            "enum": [
+              "bm25",
+              "dense",
+              "hybrid"
+            ]
+          },
+          "top_k": {
+            "type": "integer",
+            "description": ""
+          },
+          "status": {
+            "type": "string",
+            "description": "",
+            "enum": [
+              "queued",
+              "rewriting",
+              "retrieving",
+              "generating",
+              "validating",
+              "answered",
+              "insufficient_evidence",
+              "needs_clarification",
+              "failed",
+              "interrupted"
+            ]
+          },
+          "answer_blocks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AnswerBlock"
+            },
+            "description": ""
+          },
+          "citations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Citation"
+            },
+            "description": ""
+          },
+          "message": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": ""
+          },
+          "error": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ApiError"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "retrieval": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SearchResult"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "timings": {
+            "$ref": "#/components/schemas/Timings"
+          },
+          "token_usage": {
+            "$ref": "#/components/schemas/TokenUsage"
+          },
+          "model_settings": {
+            "$ref": "#/components/schemas/ModelSettings"
+          },
+          "feedback": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Feedback"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "created_at": {
+            "type": "string",
+            "description": "UTC ISO 8601 时间",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "description": "UTC ISO 8601 时间",
+            "format": "date-time"
+          },
+          "finished_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "UTC ISO 8601 时间",
+            "format": "date-time"
+          }
+        },
+        "x-owner": "D"
+      },
+      "KnowledgeBaseList": {
+        "type": "object",
+        "description": "分页列表",
+        "additionalProperties": false,
+        "required": [
+          "items",
+          "page",
+          "page_size",
+          "total"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/KnowledgeBase"
+            },
+            "description": ""
+          },
+          "page": {
+            "type": "integer",
+            "description": "",
+            "minimum": 1
+          },
+          "page_size": {
+            "type": "integer",
+            "description": "",
+            "minimum": 1,
+            "maximum": 100
+          },
+          "total": {
+            "type": "integer",
+            "description": "",
+            "minimum": 0
+          }
+        },
+        "x-owner": "B"
+      },
+      "DocumentList": {
+        "type": "object",
+        "description": "分页列表",
+        "additionalProperties": false,
+        "required": [
+          "items",
+          "page",
+          "page_size",
+          "total"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Document"
+            },
+            "description": ""
+          },
+          "page": {
+            "type": "integer",
+            "description": "",
+            "minimum": 1
+          },
+          "page_size": {
+            "type": "integer",
+            "description": "",
+            "minimum": 1,
+            "maximum": 100
+          },
+          "total": {
+            "type": "integer",
+            "description": "",
+            "minimum": 0
+          }
+        },
+        "x-owner": "B"
+      },
+      "ChunkList": {
+        "type": "object",
+        "description": "分页列表",
+        "additionalProperties": false,
+        "required": [
+          "items",
+          "page",
+          "page_size",
+          "total"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Chunk"
+            },
+            "description": ""
+          },
+          "page": {
+            "type": "integer",
+            "description": "",
+            "minimum": 1
+          },
+          "page_size": {
+            "type": "integer",
+            "description": "",
+            "minimum": 1,
+            "maximum": 100
+          },
+          "total": {
+            "type": "integer",
+            "description": "",
+            "minimum": 0
+          }
+        },
+        "x-owner": "B"
+      },
+      "ConversationList": {
+        "type": "object",
+        "description": "分页列表",
+        "additionalProperties": false,
+        "required": [
+          "items",
+          "page",
+          "page_size",
+          "total"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Conversation"
+            },
+            "description": ""
+          },
+          "page": {
+            "type": "integer",
+            "description": "",
+            "minimum": 1
+          },
+          "page_size": {
+            "type": "integer",
+            "description": "",
+            "minimum": 1,
+            "maximum": 100
+          },
+          "total": {
+            "type": "integer",
+            "description": "",
+            "minimum": 0
+          }
+        },
+        "x-owner": "D"
+      },
+      "TurnList": {
+        "type": "object",
+        "description": "分页列表",
+        "additionalProperties": false,
+        "required": [
+          "items",
+          "page",
+          "page_size",
+          "total"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Turn"
+            },
+            "description": ""
+          },
+          "page": {
+            "type": "integer",
+            "description": "",
+            "minimum": 1
+          },
+          "page_size": {
+            "type": "integer",
+            "description": "",
+            "minimum": 1,
+            "maximum": 100
+          },
+          "total": {
+            "type": "integer",
+            "description": "",
+            "minimum": 0
+          }
+        },
+        "x-owner": "D"
+      }
+    }
+  }
+}

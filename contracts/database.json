@@ -1,0 +1,641 @@
+{
+  "schema_version": 1,
+  "tables": [
+    {
+      "name": "knowledge_bases",
+      "owner": "B",
+      "purpose": "课程资料集合",
+      "columns": [
+        {
+          "name": "id",
+          "sql": "TEXT PRIMARY KEY NOT NULL",
+          "description": "标准小写 UUID"
+        },
+        {
+          "name": "name",
+          "sql": "TEXT NOT NULL CHECK(length(trim(name)) BETWEEN 1 AND 80)",
+          "description": "课程名"
+        },
+        {
+          "name": "description",
+          "sql": "TEXT NOT NULL DEFAULT '' CHECK(length(description)<=500)",
+          "description": "课程说明"
+        },
+        {
+          "name": "embedding_model",
+          "sql": "TEXT NOT NULL DEFAULT 'text-embedding-v4'",
+          "description": "本库向量模型"
+        },
+        {
+          "name": "embedding_dimensions",
+          "sql": "INTEGER NOT NULL DEFAULT 1024 CHECK(embedding_dimensions=1024)",
+          "description": "固定维度"
+        },
+        {
+          "name": "created_at",
+          "sql": "TEXT NOT NULL",
+          "description": "UTC ISO 8601"
+        },
+        {
+          "name": "updated_at",
+          "sql": "TEXT NOT NULL",
+          "description": "UTC ISO 8601"
+        }
+      ],
+      "constraints": []
+    },
+    {
+      "name": "documents",
+      "owner": "B",
+      "purpose": "原文件与导入状态 保留删除墓碑",
+      "columns": [
+        {
+          "name": "id",
+          "sql": "TEXT PRIMARY KEY NOT NULL",
+          "description": "标准小写 UUID"
+        },
+        {
+          "name": "knowledge_base_id",
+          "sql": "TEXT NOT NULL REFERENCES knowledge_bases(id) ON DELETE RESTRICT",
+          "description": "所属课程"
+        },
+        {
+          "name": "upload_client_request_id",
+          "sql": "TEXT NOT NULL",
+          "description": "上传幂等编号"
+        },
+        {
+          "name": "file_name",
+          "sql": "TEXT NOT NULL CHECK(length(file_name) BETWEEN 1 AND 255)",
+          "description": "原文件展示名"
+        },
+        {
+          "name": "storage_relpath",
+          "sql": "TEXT NOT NULL UNIQUE",
+          "description": "服务器生成的相对路径 不对外返回"
+        },
+        {
+          "name": "file_size_bytes",
+          "sql": "INTEGER NOT NULL CHECK(file_size_bytes BETWEEN 1 AND 20971520)",
+          "description": "文件字节数"
+        },
+        {
+          "name": "page_count",
+          "sql": "INTEGER CHECK(page_count>=0)",
+          "description": "未知为空 超限实测值可保存作失败说明"
+        },
+        {
+          "name": "chunk_count",
+          "sql": "INTEGER NOT NULL DEFAULT 0 CHECK(chunk_count>=0)",
+          "description": "本次生成片段数"
+        },
+        {
+          "name": "reserved_chunk_count",
+          "sql": "INTEGER NOT NULL DEFAULT 0 CHECK(reserved_chunk_count>=0)",
+          "description": "导入预留容量"
+        },
+        {
+          "name": "status",
+          "sql": "TEXT NOT NULL CHECK(status IN ('queued','parsing','indexing','ready','failed','interrupted','deleting','deleted'))",
+          "description": "资料生命周期"
+        },
+        {
+          "name": "enabled",
+          "sql": "INTEGER NOT NULL DEFAULT 1 CHECK(enabled IN (0,1))",
+          "description": "是否参与新检索"
+        },
+        {
+          "name": "warnings_json",
+          "sql": "TEXT NOT NULL DEFAULT '[]' CHECK(json_valid(warnings_json) AND json_type(warnings_json)='array')",
+          "description": "DocumentWarning 数组"
+        },
+        {
+          "name": "error_json",
+          "sql": "TEXT CHECK(error_json IS NULL OR json_valid(error_json))",
+          "description": "ApiError 或空"
+        },
+        {
+          "name": "active_job_id",
+          "sql": "TEXT REFERENCES import_jobs(id) ON DELETE SET NULL",
+          "description": "活动任务 终态为空"
+        },
+        {
+          "name": "created_at",
+          "sql": "TEXT NOT NULL",
+          "description": "UTC ISO 8601"
+        },
+        {
+          "name": "updated_at",
+          "sql": "TEXT NOT NULL",
+          "description": "UTC ISO 8601"
+        },
+        {
+          "name": "deleted_at",
+          "sql": "TEXT",
+          "description": "完成清理时间"
+        }
+      ],
+      "constraints": [
+        "UNIQUE(knowledge_base_id,upload_client_request_id)",
+        "UNIQUE(id,knowledge_base_id)",
+        "CHECK(status NOT IN ('deleting','deleted') OR enabled=0)"
+      ]
+    },
+    {
+      "name": "document_pages",
+      "owner": "B",
+      "purpose": "页内文字和片段位置基准",
+      "columns": [
+        {
+          "name": "id",
+          "sql": "TEXT PRIMARY KEY NOT NULL",
+          "description": "标准小写 UUID"
+        },
+        {
+          "name": "document_id",
+          "sql": "TEXT NOT NULL REFERENCES documents(id) ON DELETE CASCADE",
+          "description": "资料编号"
+        },
+        {
+          "name": "page_no",
+          "sql": "INTEGER NOT NULL CHECK(page_no>=1)",
+          "description": "实际 PDF 页序"
+        },
+        {
+          "name": "text",
+          "sql": "TEXT NOT NULL",
+          "description": "规范换行后的完整页文本"
+        },
+        {
+          "name": "char_count",
+          "sql": "INTEGER NOT NULL CHECK(char_count>=0)",
+          "description": "Unicode 码点数"
+        },
+        {
+          "name": "extraction_status",
+          "sql": "TEXT NOT NULL CHECK(extraction_status IN ('text','low_text','empty'))",
+          "description": "提取结果"
+        }
+      ],
+      "constraints": [
+        "UNIQUE(document_id,page_no)"
+      ]
+    },
+    {
+      "name": "chunks",
+      "owner": "B",
+      "purpose": "页内片段与检索文本",
+      "columns": [
+        {
+          "name": "id",
+          "sql": "TEXT PRIMARY KEY NOT NULL",
+          "description": "标准小写 UUID"
+        },
+        {
+          "name": "document_id",
+          "sql": "TEXT NOT NULL",
+          "description": "资料编号"
+        },
+        {
+          "name": "ordinal",
+          "sql": "INTEGER NOT NULL CHECK(ordinal>=0)",
+          "description": "资料内零基顺序"
+        },
+        {
+          "name": "page_no",
+          "sql": "INTEGER NOT NULL CHECK(page_no>=1)",
+          "description": "实际页序"
+        },
+        {
+          "name": "char_start",
+          "sql": "INTEGER NOT NULL CHECK(char_start>=0)",
+          "description": "码点起点 包含"
+        },
+        {
+          "name": "char_end",
+          "sql": "INTEGER NOT NULL CHECK(char_end>char_start)",
+          "description": "码点终点 不包含"
+        },
+        {
+          "name": "text",
+          "sql": "TEXT NOT NULL CHECK(length(text) BETWEEN 1 AND 1000)",
+          "description": "等于对应页文本切片"
+        },
+        {
+          "name": "search_text",
+          "sql": "TEXT NOT NULL",
+          "description": "规范化检索文字"
+        },
+        {
+          "name": "created_at",
+          "sql": "TEXT NOT NULL",
+          "description": "UTC ISO 8601"
+        }
+      ],
+      "constraints": [
+        "UNIQUE(document_id,ordinal)",
+        "UNIQUE(id,document_id)",
+        "FOREIGN KEY(document_id,page_no) REFERENCES document_pages(document_id,page_no) ON DELETE CASCADE"
+      ]
+    },
+    {
+      "name": "chunk_embeddings",
+      "owner": "B 持久化 C 生成与读取",
+      "purpose": "片段向量",
+      "columns": [
+        {
+          "name": "chunk_id",
+          "sql": "TEXT PRIMARY KEY NOT NULL REFERENCES chunks(id) ON DELETE CASCADE",
+          "description": "片段编号 一片段一向量"
+        },
+        {
+          "name": "model",
+          "sql": "TEXT NOT NULL",
+          "description": "与课程配置一致"
+        },
+        {
+          "name": "dimensions",
+          "sql": "INTEGER NOT NULL CHECK(dimensions=1024)",
+          "description": "维度"
+        },
+        {
+          "name": "vector",
+          "sql": "BLOB NOT NULL CHECK(length(vector)=4096)",
+          "description": "1024 个小端 float32 已 L2 归一化"
+        },
+        {
+          "name": "created_at",
+          "sql": "TEXT NOT NULL",
+          "description": "UTC ISO 8601"
+        }
+      ],
+      "constraints": []
+    },
+    {
+      "name": "import_jobs",
+      "owner": "B",
+      "purpose": "持久化导入尝试",
+      "columns": [
+        {
+          "name": "id",
+          "sql": "TEXT PRIMARY KEY NOT NULL",
+          "description": "标准小写 UUID"
+        },
+        {
+          "name": "document_id",
+          "sql": "TEXT NOT NULL REFERENCES documents(id) ON DELETE CASCADE",
+          "description": "所属资料"
+        },
+        {
+          "name": "status",
+          "sql": "TEXT NOT NULL CHECK(status IN ('queued','running','completed','failed','interrupted','cancelled'))",
+          "description": "任务状态"
+        },
+        {
+          "name": "stage",
+          "sql": "TEXT NOT NULL CHECK(stage IN ('queued','parsing','indexing','publishing','finished'))",
+          "description": "处理阶段"
+        },
+        {
+          "name": "pages_processed",
+          "sql": "INTEGER NOT NULL DEFAULT 0 CHECK(pages_processed>=0)",
+          "description": "已处理页数"
+        },
+        {
+          "name": "pages_total",
+          "sql": "INTEGER CHECK(pages_total>=0)",
+          "description": "总页数 未知为空"
+        },
+        {
+          "name": "chunks_embedded",
+          "sql": "INTEGER NOT NULL DEFAULT 0 CHECK(chunks_embedded>=0)",
+          "description": "已完成向量数"
+        },
+        {
+          "name": "chunks_total",
+          "sql": "INTEGER CHECK(chunks_total>=0)",
+          "description": "总片段数"
+        },
+        {
+          "name": "error_json",
+          "sql": "TEXT CHECK(error_json IS NULL OR json_valid(error_json))",
+          "description": "ApiError 或空"
+        },
+        {
+          "name": "created_at",
+          "sql": "TEXT NOT NULL",
+          "description": "UTC ISO 8601"
+        },
+        {
+          "name": "started_at",
+          "sql": "TEXT",
+          "description": "开始时间"
+        },
+        {
+          "name": "finished_at",
+          "sql": "TEXT",
+          "description": "结束时间"
+        }
+      ],
+      "constraints": []
+    },
+    {
+      "name": "conversations",
+      "owner": "D",
+      "purpose": "固定资料范围的会话",
+      "columns": [
+        {
+          "name": "id",
+          "sql": "TEXT PRIMARY KEY NOT NULL",
+          "description": "标准小写 UUID"
+        },
+        {
+          "name": "knowledge_base_id",
+          "sql": "TEXT NOT NULL REFERENCES knowledge_bases(id) ON DELETE RESTRICT",
+          "description": "所属课程"
+        },
+        {
+          "name": "title",
+          "sql": "TEXT NOT NULL CHECK(length(trim(title)) BETWEEN 1 AND 80)",
+          "description": "标题"
+        },
+        {
+          "name": "scope",
+          "sql": "TEXT NOT NULL CHECK(scope IN ('all','selected'))",
+          "description": "创建时选择方式"
+        },
+        {
+          "name": "created_at",
+          "sql": "TEXT NOT NULL",
+          "description": "UTC ISO 8601"
+        },
+        {
+          "name": "updated_at",
+          "sql": "TEXT NOT NULL",
+          "description": "UTC ISO 8601"
+        }
+      ],
+      "constraints": [
+        "UNIQUE(id,knowledge_base_id)"
+      ]
+    },
+    {
+      "name": "conversation_documents",
+      "owner": "D",
+      "purpose": "会话资料范围 以关联表约束课程归属",
+      "columns": [
+        {
+          "name": "conversation_id",
+          "sql": "TEXT NOT NULL",
+          "description": "会话编号"
+        },
+        {
+          "name": "document_id",
+          "sql": "TEXT NOT NULL",
+          "description": "具体资料编号 删除后仍保留墓碑关联"
+        },
+        {
+          "name": "knowledge_base_id",
+          "sql": "TEXT NOT NULL",
+          "description": "用于组合外键校验同一课程"
+        }
+      ],
+      "constraints": [
+        "PRIMARY KEY(conversation_id,document_id)",
+        "FOREIGN KEY(conversation_id,knowledge_base_id) REFERENCES conversations(id,knowledge_base_id) ON DELETE CASCADE",
+        "FOREIGN KEY(document_id,knowledge_base_id) REFERENCES documents(id,knowledge_base_id) ON DELETE RESTRICT"
+      ]
+    },
+    {
+      "name": "turns",
+      "owner": "D",
+      "purpose": "一次异步问答及其证据快照",
+      "columns": [
+        {
+          "name": "id",
+          "sql": "TEXT PRIMARY KEY NOT NULL",
+          "description": "标准小写 UUID"
+        },
+        {
+          "name": "conversation_id",
+          "sql": "TEXT NOT NULL REFERENCES conversations(id) ON DELETE CASCADE",
+          "description": "所属会话"
+        },
+        {
+          "name": "client_request_id",
+          "sql": "TEXT NOT NULL",
+          "description": "提交幂等编号"
+        },
+        {
+          "name": "retry_of_turn_id",
+          "sql": "TEXT REFERENCES turns(id) ON DELETE SET NULL",
+          "description": "主动重试的原问答"
+        },
+        {
+          "name": "question",
+          "sql": "TEXT NOT NULL CHECK(length(trim(question)) BETWEEN 1 AND 2000)",
+          "description": "原问题"
+        },
+        {
+          "name": "standalone_question",
+          "sql": "TEXT CHECK(standalone_question IS NULL OR length(standalone_question) BETWEEN 1 AND 2000)",
+          "description": "独立检索问题"
+        },
+        {
+          "name": "strategy",
+          "sql": "TEXT NOT NULL CHECK(strategy IN ('bm25','dense','hybrid'))",
+          "description": "检索策略"
+        },
+        {
+          "name": "top_k",
+          "sql": "INTEGER NOT NULL CHECK(top_k BETWEEN 1 AND 10)",
+          "description": "最终片段数"
+        },
+        {
+          "name": "scope_document_ids_json",
+          "sql": "TEXT NOT NULL CHECK(json_valid(scope_document_ids_json) AND json_type(scope_document_ids_json)='array' AND json_array_length(scope_document_ids_json)>0)",
+          "description": "本轮范围不可变副本"
+        },
+        {
+          "name": "rewrite_history_json",
+          "sql": "TEXT NOT NULL CHECK(json_valid(rewrite_history_json) AND json_type(rewrite_history_json)='array')",
+          "description": "改写所用历史 完整轮数和总字符数由应用限制"
+        },
+        {
+          "name": "status",
+          "sql": "TEXT NOT NULL CHECK(status IN ('queued','rewriting','retrieving','generating','validating','answered','insufficient_evidence','needs_clarification','failed','interrupted'))",
+          "description": "问答状态"
+        },
+        {
+          "name": "answer_blocks_json",
+          "sql": "TEXT NOT NULL CHECK(json_valid(answer_blocks_json) AND json_type(answer_blocks_json)='array')",
+          "description": "AnswerBlock 数组"
+        },
+        {
+          "name": "message",
+          "sql": "TEXT",
+          "description": "不足或澄清提示"
+        },
+        {
+          "name": "error_json",
+          "sql": "TEXT CHECK(error_json IS NULL OR json_valid(error_json))",
+          "description": "ApiError"
+        },
+        {
+          "name": "retrieval_snapshot_json",
+          "sql": "TEXT CHECK(retrieval_snapshot_json IS NULL OR json_valid(retrieval_snapshot_json))",
+          "description": "SearchResult 不可变快照"
+        },
+        {
+          "name": "timings_json",
+          "sql": "TEXT NOT NULL CHECK(json_valid(timings_json))",
+          "description": "Timings"
+        },
+        {
+          "name": "token_usage_json",
+          "sql": "TEXT NOT NULL CHECK(json_valid(token_usage_json))",
+          "description": "TokenUsage"
+        },
+        {
+          "name": "model_settings_json",
+          "sql": "TEXT NOT NULL CHECK(json_valid(model_settings_json))",
+          "description": "ModelSettings"
+        },
+        {
+          "name": "created_at",
+          "sql": "TEXT NOT NULL",
+          "description": "UTC ISO 8601"
+        },
+        {
+          "name": "updated_at",
+          "sql": "TEXT NOT NULL",
+          "description": "UTC ISO 8601"
+        },
+        {
+          "name": "finished_at",
+          "sql": "TEXT",
+          "description": "终态时间"
+        }
+      ],
+      "constraints": [
+        "UNIQUE(conversation_id,client_request_id)",
+        "CHECK(status<>'answered' OR json_array_length(answer_blocks_json)>0)",
+        "CHECK(status NOT IN ('insufficient_evidence','needs_clarification','failed','interrupted') OR json_array_length(answer_blocks_json)=0)"
+      ]
+    },
+    {
+      "name": "citations",
+      "owner": "D",
+      "purpose": "引用内容快照 保留可追溯历史",
+      "columns": [
+        {
+          "name": "id",
+          "sql": "TEXT PRIMARY KEY NOT NULL",
+          "description": "标准小写 UUID"
+        },
+        {
+          "name": "turn_id",
+          "sql": "TEXT NOT NULL REFERENCES turns(id) ON DELETE CASCADE",
+          "description": "问答编号"
+        },
+        {
+          "name": "citation_id",
+          "sql": "INTEGER NOT NULL CHECK(citation_id>=1)",
+          "description": "本轮显示编号"
+        },
+        {
+          "name": "document_id",
+          "sql": "TEXT NOT NULL REFERENCES documents(id) ON DELETE RESTRICT",
+          "description": "保留资料墓碑"
+        },
+        {
+          "name": "chunk_id",
+          "sql": "TEXT REFERENCES chunks(id) ON DELETE SET NULL",
+          "description": "片段清理后为空"
+        },
+        {
+          "name": "file_name",
+          "sql": "TEXT NOT NULL",
+          "description": "回答时文件名"
+        },
+        {
+          "name": "page_no",
+          "sql": "INTEGER NOT NULL CHECK(page_no>=1)",
+          "description": "回答时实际页序"
+        },
+        {
+          "name": "excerpt",
+          "sql": "TEXT NOT NULL CHECK(length(excerpt) BETWEEN 1 AND 1000)",
+          "description": "完整原片段快照"
+        }
+      ],
+      "constraints": [
+        "UNIQUE(turn_id,citation_id)"
+      ]
+    },
+    {
+      "name": "feedback",
+      "owner": "D",
+      "purpose": "一个回答一份可修改反馈",
+      "columns": [
+        {
+          "name": "id",
+          "sql": "TEXT PRIMARY KEY NOT NULL",
+          "description": "标准小写 UUID"
+        },
+        {
+          "name": "turn_id",
+          "sql": "TEXT NOT NULL UNIQUE REFERENCES turns(id) ON DELETE CASCADE",
+          "description": "被反馈问答"
+        },
+        {
+          "name": "rating",
+          "sql": "TEXT NOT NULL CHECK(rating IN ('up','down'))",
+          "description": "反馈类型"
+        },
+        {
+          "name": "reason",
+          "sql": "TEXT CHECK(reason IS NULL OR reason IN ('helpful','incorrect','unsupported','missing_information','other'))",
+          "description": "原因"
+        },
+        {
+          "name": "comment",
+          "sql": "TEXT NOT NULL DEFAULT '' CHECK(length(comment)<=1000)",
+          "description": "补充文字"
+        },
+        {
+          "name": "created_at",
+          "sql": "TEXT NOT NULL",
+          "description": "UTC ISO 8601"
+        },
+        {
+          "name": "updated_at",
+          "sql": "TEXT NOT NULL",
+          "description": "UTC ISO 8601"
+        }
+      ],
+      "constraints": []
+    }
+  ],
+  "indexes": [
+    "CREATE INDEX ix_documents_scope ON documents(knowledge_base_id,status,enabled);",
+    "CREATE INDEX ix_documents_created ON documents(knowledge_base_id,created_at,id);",
+    "CREATE INDEX ix_chunks_page ON chunks(document_id,page_no,ordinal);",
+    "CREATE INDEX ix_import_queue ON import_jobs(status,created_at,id);",
+    "CREATE UNIQUE INDEX ux_import_active ON import_jobs(document_id) WHERE status IN ('queued','running');",
+    "CREATE INDEX ix_conversations_recent ON conversations(knowledge_base_id,updated_at,id);",
+    "CREATE INDEX ix_turns_history ON turns(conversation_id,created_at,id);",
+    "CREATE UNIQUE INDEX ux_turn_active ON turns(conversation_id) WHERE status IN ('queued','rewriting','retrieving','generating','validating');",
+    "CREATE INDEX ix_citations_document ON citations(document_id);"
+  ],
+  "rules": [
+    "所有 ID 由应用生成小写 UUID",
+    "所有时间由应用写入 UTC ISO 8601",
+    "启用 foreign_keys 和 WAL busy_timeout=5000",
+    "先取课程锁再取数据库写锁 仅短事务",
+    "范围关联创建后不可修改 非空由应用保证",
+    "只有 B 改资料状态 只有 D 改问答状态",
+    "检索范围先过滤再取 Top-k",
+    "JSON 结构由应用按 OpenAPI 再校验"
+  ]
+}

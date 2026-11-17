@@ -1,0 +1,25 @@
+server:
+  address: 127.0.0.1
+  port: 8000
+spring:
+  config:
+    import: optional:file:./config/application-local.yml
+  sql:
+    init:
+      mode: never
+  jackson:
+    deserialization:
+      fail-on-unknown-properties: true
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 21MB
+app:
+  home: ${RAG_APP_HOME:..}
+  data-dir: data
+  model:
+    base-url: ${MODEL_BASE_URL:}
+    api-key: ${DASHSCOPE_API_KEY:}
+    generation-model: qwen3.5-plus
+    embedding-model: text-embedding-v4
+    embedding-dimensions: 1024

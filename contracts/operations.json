@@ -1,0 +1,699 @@
+[
+  {
+    "method": "GET",
+    "path": "/health",
+    "name": "getHealth",
+    "owner": "D",
+    "description": "读取启动状态",
+    "response": "Health",
+    "body": null,
+    "status": 200,
+    "paging": false,
+    "params": []
+  },
+  {
+    "method": "GET",
+    "path": "/knowledge-bases",
+    "name": "listKnowledgeBases",
+    "owner": "B",
+    "description": "课程列表",
+    "response": "KnowledgeBaseList",
+    "body": null,
+    "status": 200,
+    "paging": true,
+    "params": [
+      {
+        "in": "query",
+        "name": "page",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "description": "",
+          "minimum": 1,
+          "maximum": 2147483647,
+          "default": 1
+        }
+      },
+      {
+        "in": "query",
+        "name": "page_size",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "description": "",
+          "minimum": 1,
+          "maximum": 100,
+          "default": 20
+        }
+      }
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/knowledge-bases",
+    "name": "createKnowledgeBase",
+    "owner": "B",
+    "description": "创建课程",
+    "response": "KnowledgeBase",
+    "body": "KnowledgeBaseCreate",
+    "status": 201,
+    "paging": false,
+    "params": []
+  },
+  {
+    "method": "GET",
+    "path": "/knowledge-bases/{knowledge_base_id}",
+    "name": "getKnowledgeBase",
+    "owner": "B",
+    "description": "读取课程",
+    "response": "KnowledgeBase",
+    "body": null,
+    "status": 200,
+    "paging": false,
+    "params": [
+      {
+        "in": "path",
+        "name": "knowledge_base_id",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "description": "业务编号",
+          "format": "uuid"
+        }
+      }
+    ]
+  },
+  {
+    "method": "PATCH",
+    "path": "/knowledge-bases/{knowledge_base_id}",
+    "name": "updateKnowledgeBase",
+    "owner": "B",
+    "description": "修改名称与说明 两字段均必传",
+    "response": "KnowledgeBase",
+    "body": "KnowledgeBaseUpdate",
+    "status": 200,
+    "paging": false,
+    "params": [
+      {
+        "in": "path",
+        "name": "knowledge_base_id",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "description": "业务编号",
+          "format": "uuid"
+        }
+      }
+    ]
+  },
+  {
+    "method": "DELETE",
+    "path": "/knowledge-bases/{knowledge_base_id}",
+    "name": "deleteKnowledgeBase",
+    "owner": "B",
+    "description": "仅删除空课程",
+    "response": null,
+    "body": null,
+    "status": 204,
+    "paging": false,
+    "params": [
+      {
+        "in": "path",
+        "name": "knowledge_base_id",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "description": "业务编号",
+          "format": "uuid"
+        }
+      }
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/knowledge-bases/{knowledge_base_id}/documents",
+    "name": "listDocuments",
+    "owner": "B",
+    "description": "未删除资料列表",
+    "response": "DocumentList",
+    "body": null,
+    "status": 200,
+    "paging": true,
+    "params": [
+      {
+        "in": "path",
+        "name": "knowledge_base_id",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "description": "业务编号",
+          "format": "uuid"
+        }
+      },
+      {
+        "in": "query",
+        "name": "page",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "description": "",
+          "minimum": 1,
+          "maximum": 2147483647,
+          "default": 1
+        }
+      },
+      {
+        "in": "query",
+        "name": "page_size",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "description": "",
+          "minimum": 1,
+          "maximum": 100,
+          "default": 20
+        }
+      }
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/knowledge-bases/{knowledge_base_id}/documents",
+    "name": "uploadDocument",
+    "owner": "B",
+    "description": "上传单个 PDF",
+    "response": "ImportAccepted",
+    "body": null,
+    "status": 202,
+    "paging": false,
+    "params": [
+      {
+        "in": "path",
+        "name": "knowledge_base_id",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "description": "业务编号",
+          "format": "uuid"
+        }
+      }
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/documents/{document_id}",
+    "name": "getDocument",
+    "owner": "B",
+    "description": "读取资料 含删除墓碑",
+    "response": "Document",
+    "body": null,
+    "status": 200,
+    "paging": false,
+    "params": [
+      {
+        "in": "path",
+        "name": "document_id",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "description": "业务编号",
+          "format": "uuid"
+        }
+      }
+    ]
+  },
+  {
+    "method": "PATCH",
+    "path": "/documents/{document_id}",
+    "name": "updateDocument",
+    "owner": "B",
+    "description": "启用或停用 ready 资料",
+    "response": "Document",
+    "body": "DocumentUpdate",
+    "status": 200,
+    "paging": false,
+    "params": [
+      {
+        "in": "path",
+        "name": "document_id",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "description": "业务编号",
+          "format": "uuid"
+        }
+      }
+    ]
+  },
+  {
+    "method": "DELETE",
+    "path": "/documents/{document_id}",
+    "name": "deleteDocument",
+    "owner": "B",
+    "description": "退出检索并异步清理",
+    "response": "Document",
+    "body": null,
+    "status": 202,
+    "paging": false,
+    "params": [
+      {
+        "in": "path",
+        "name": "document_id",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "description": "业务编号",
+          "format": "uuid"
+        }
+      }
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/documents/{document_id}/chunks",
+    "name": "listChunks",
+    "owner": "B",
+    "description": "预览已保存片段",
+    "response": "ChunkList",
+    "body": null,
+    "status": 200,
+    "paging": true,
+    "params": [
+      {
+        "in": "path",
+        "name": "document_id",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "description": "业务编号",
+          "format": "uuid"
+        }
+      },
+      {
+        "in": "query",
+        "name": "page",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "description": "",
+          "minimum": 1,
+          "maximum": 2147483647,
+          "default": 1
+        }
+      },
+      {
+        "in": "query",
+        "name": "page_size",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "description": "",
+          "minimum": 1,
+          "maximum": 100,
+          "default": 20
+        }
+      }
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/documents/{document_id}/pages/{page_no}",
+    "name": "getDocumentPage",
+    "owner": "B",
+    "description": "读取一页提取文字",
+    "response": "DocumentPage",
+    "body": null,
+    "status": 200,
+    "paging": false,
+    "params": [
+      {
+        "in": "path",
+        "name": "document_id",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "description": "业务编号",
+          "format": "uuid"
+        }
+      },
+      {
+        "in": "path",
+        "name": "page_no",
+        "required": true,
+        "schema": {
+          "type": "integer",
+          "description": "",
+          "minimum": 1
+        }
+      }
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/documents/{document_id}/file",
+    "name": "getDocumentFile",
+    "owner": "B",
+    "description": "完整读取原 PDF 不实现 Range",
+    "response": "PDF",
+    "body": null,
+    "status": 200,
+    "paging": false,
+    "params": [
+      {
+        "in": "path",
+        "name": "document_id",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "description": "业务编号",
+          "format": "uuid"
+        }
+      }
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/documents/{document_id}/retry",
+    "name": "retryDocument",
+    "owner": "B",
+    "description": "重试 failed interrupted 导入；deleting 则继续清理",
+    "response": "Document",
+    "body": null,
+    "status": 202,
+    "paging": false,
+    "params": [
+      {
+        "in": "path",
+        "name": "document_id",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "description": "业务编号",
+          "format": "uuid"
+        }
+      }
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/import-jobs/{job_id}",
+    "name": "getImportJob",
+    "owner": "B",
+    "description": "导入进度",
+    "response": "ImportJob",
+    "body": null,
+    "status": 200,
+    "paging": false,
+    "params": [
+      {
+        "in": "path",
+        "name": "job_id",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "description": "业务编号",
+          "format": "uuid"
+        }
+      }
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/conversations",
+    "name": "listConversations",
+    "owner": "D",
+    "description": "按课程列出会话",
+    "response": "ConversationList",
+    "body": null,
+    "status": 200,
+    "paging": true,
+    "params": [
+      {
+        "in": "query",
+        "name": "page",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "description": "",
+          "minimum": 1,
+          "maximum": 2147483647,
+          "default": 1
+        }
+      },
+      {
+        "in": "query",
+        "name": "page_size",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "description": "",
+          "minimum": 1,
+          "maximum": 100,
+          "default": 20
+        }
+      },
+      {
+        "in": "query",
+        "name": "knowledge_base_id",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "description": "业务编号",
+          "format": "uuid"
+        }
+      }
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/conversations",
+    "name": "createConversation",
+    "owner": "D",
+    "description": "创建固定资料范围会话",
+    "response": "Conversation",
+    "body": "ConversationCreate",
+    "status": 201,
+    "paging": false,
+    "params": []
+  },
+  {
+    "method": "GET",
+    "path": "/conversations/{conversation_id}",
+    "name": "getConversation",
+    "owner": "D",
+    "description": "读取会话与失效资料",
+    "response": "Conversation",
+    "body": null,
+    "status": 200,
+    "paging": false,
+    "params": [
+      {
+        "in": "path",
+        "name": "conversation_id",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "description": "业务编号",
+          "format": "uuid"
+        }
+      }
+    ]
+  },
+  {
+    "method": "PATCH",
+    "path": "/conversations/{conversation_id}",
+    "name": "updateConversation",
+    "owner": "D",
+    "description": "修改标题",
+    "response": "Conversation",
+    "body": "ConversationUpdate",
+    "status": 200,
+    "paging": false,
+    "params": [
+      {
+        "in": "path",
+        "name": "conversation_id",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "description": "业务编号",
+          "format": "uuid"
+        }
+      }
+    ]
+  },
+  {
+    "method": "DELETE",
+    "path": "/conversations/{conversation_id}",
+    "name": "deleteConversation",
+    "owner": "D",
+    "description": "无活动问答时删除会话",
+    "response": null,
+    "body": null,
+    "status": 204,
+    "paging": false,
+    "params": [
+      {
+        "in": "path",
+        "name": "conversation_id",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "description": "业务编号",
+          "format": "uuid"
+        }
+      }
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/conversations/{conversation_id}/turns",
+    "name": "listTurns",
+    "owner": "D",
+    "description": "会话历史 按创建时间升序",
+    "response": "TurnList",
+    "body": null,
+    "status": 200,
+    "paging": true,
+    "params": [
+      {
+        "in": "path",
+        "name": "conversation_id",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "description": "业务编号",
+          "format": "uuid"
+        }
+      },
+      {
+        "in": "query",
+        "name": "page",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "description": "",
+          "minimum": 1,
+          "maximum": 2147483647,
+          "default": 1
+        }
+      },
+      {
+        "in": "query",
+        "name": "page_size",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "description": "",
+          "minimum": 1,
+          "maximum": 100,
+          "default": 20
+        }
+      }
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/conversations/{conversation_id}/turns",
+    "name": "createTurn",
+    "owner": "D",
+    "description": "异步提问",
+    "response": "Turn",
+    "body": "TurnCreate",
+    "status": 202,
+    "paging": false,
+    "params": [
+      {
+        "in": "path",
+        "name": "conversation_id",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "description": "业务编号",
+          "format": "uuid"
+        }
+      }
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/turns/{turn_id}",
+    "name": "getTurn",
+    "owner": "D",
+    "description": "问答状态与结果",
+    "response": "Turn",
+    "body": null,
+    "status": 200,
+    "paging": false,
+    "params": [
+      {
+        "in": "path",
+        "name": "turn_id",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "description": "业务编号",
+          "format": "uuid"
+        }
+      }
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/turns/{turn_id}/retry",
+    "name": "retryTurn",
+    "owner": "D",
+    "description": "主动重试 创建新记录并保留原记录",
+    "response": "Turn",
+    "body": "TurnRetry",
+    "status": 202,
+    "paging": false,
+    "params": [
+      {
+        "in": "path",
+        "name": "turn_id",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "description": "业务编号",
+          "format": "uuid"
+        }
+      }
+    ]
+  },
+  {
+    "method": "PUT",
+    "path": "/turns/{turn_id}/feedback",
+    "name": "putFeedback",
+    "owner": "D",
+    "description": "修改 answered 回答的共享反馈",
+    "response": "Feedback",
+    "body": "FeedbackWrite",
+    "status": 200,
+    "paging": false,
+    "params": [
+      {
+        "in": "path",
+        "name": "turn_id",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "description": "业务编号",
+          "format": "uuid"
+        }
+      }
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/retrieval/search",
+    "name": "search",
+    "owner": "C",
+    "description": "检索调试 复用正式检索实现",
+    "response": "SearchResult",
+    "body": "SearchRequest",
+    "status": 200,
+    "paging": false,
+    "params": []
+  }
+]

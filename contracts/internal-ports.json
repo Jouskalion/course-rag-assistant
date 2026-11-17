@@ -1,0 +1,176 @@
+{
+  "types": {
+    "Deadline": {
+      "owner": "D",
+      "fields": "long deadlineNanos",
+      "description": "整个问答共用的 System.nanoTime 截止时刻"
+    },
+    "ParsedPage": {
+      "owner": "B",
+      "fields": "UUID documentId, int pageNo, String text, String extractionStatus",
+      "description": "页序从 1 开始；text 是位置基准"
+    },
+    "ChunkDraft": {
+      "owner": "B",
+      "fields": "UUID chunkId, UUID documentId, int ordinal, int pageNo, int charStart, int charEnd, String text, String searchText",
+      "description": "码点区间左闭右开；不跨页"
+    },
+    "EmbeddedChunk": {
+      "owner": "C",
+      "fields": "UUID chunkId, String model, int dimensions, float[] vector",
+      "description": "已校验、归一化的向量"
+    },
+    "EmbeddedBatch": {
+      "owner": "C",
+      "fields": "List<EmbeddedChunk> chunks, int completed, int total",
+      "description": "B 在回调中短事务保存进度"
+    },
+    "EmbeddingBuildSummary": {
+      "owner": "C",
+      "fields": "int completed, int total",
+      "description": "成功必须完成全部片段"
+    },
+    "ProviderUsage": {
+      "owner": "D",
+      "fields": "Long inputTokens, Long outputTokens",
+      "description": "真实供应商用量；未知为空"
+    },
+    "EmbeddingBatchResult": {
+      "owner": "C",
+      "fields": "List<EmbeddedChunk> vectors, ProviderUsage usage, String actualModel",
+      "description": "按输入片段编号还原顺序"
+    },
+    "QueryVector": {
+      "owner": "C",
+      "fields": "String model, int dimensions, float[] vector, ProviderUsage usage, String actualModel",
+      "description": "问题向量与片段采用相同模型"
+    },
+    "CatalogChunk": {
+      "owner": "B",
+      "fields": "UUID knowledgeBaseId, UUID documentId, UUID chunkId, String fileName, int pageNo, int charStart, int charEnd, String text, String searchText, String model, int dimensions, float[] vector",
+      "description": "仅加载 ready 且 enabled 资料 不可变副本"
+    },
+    "CatalogData": {
+      "owner": "B",
+      "fields": "UUID knowledgeBaseId, List<CatalogChunk> chunks",
+      "description": "数据库的完整可检索课程快照"
+    },
+    "HistoryTurn": {
+      "owner": "D",
+      "fields": "String question, String answer",
+      "description": "完整已完成轮；只用于指代消解"
+    },
+    "RewriteResult": {
+      "owner": "D",
+      "fields": "boolean needsClarification, String standaloneQuestion, String message, ProviderUsage usage, String actualModel",
+      "description": "需澄清时问题为空；否则独立问题非空"
+    },
+    "ModelBlock": {
+      "owner": "D",
+      "fields": "String text, List<String> sourceIds",
+      "description": "每个事实段使用本轮已存在的 S 编号"
+    },
+    "ModelAnswer": {
+      "owner": "D",
+      "fields": "String answerStatus, List<ModelBlock> answerBlocks, String message",
+      "description": "仅 answered insufficient_evidence needs_clarification"
+    },
+    "ChatCall": {
+      "owner": "D",
+      "fields": "String content, ProviderUsage usage, String actualModel",
+      "description": "原始模型内容；由问答层解析、校验，保留原文供一次结构修复"
+    }
+  },
+  "ports": {
+    "ScopePort": {
+      "owner": "B",
+      "caller": "D C",
+      "implementation": "documents/DefaultScopeService.java",
+      "methods": [
+        {
+          "signature": "List<UUID> resolve(UUID knowledgeBaseId, String scope, List<UUID> documentIds)",
+          "rule": "创建会话时 all 展开当前可用资料；selected 校验后返回固定集合"
+        },
+        {
+          "signature": "void validateFixed(UUID knowledgeBaseId, List<UUID> documentIds)",
+          "rule": "任一失效或跨课程即报错，不能悄悄删减集合"
+        },
+        {
+          "signature": "Map<UUID, Boolean> sourceAvailability(List<UUID> documentIds)",
+          "rule": "D 读取历史引用时调用；返回每个资料原文件当前是否可打开的不可变映射，停用不影响查看，缺失或删除为 false"
+        }
+      ]
+    },
+    "CatalogReadPort": {
+      "owner": "B",
+      "caller": "C",
+      "implementation": "documents/JdbcCatalogReader.java",
+      "methods": [
+        {
+          "signature": "CatalogData load(UUID knowledgeBaseId)",
+          "rule": "在课程锁内读取 ready 且 enabled 的完整片段和向量"
+        }
+      ]
+    },
+    "IndexPort": {
+      "owner": "C",
+      "caller": "B",
+      "implementation": "retrieval/DefaultIndexService.java",
+      "methods": [
+        {
+          "signature": "EmbeddingBuildSummary embed(List<ChunkDraft> chunks, Consumer<EmbeddedBatch> onBatch, BooleanSupplier cancelled)",
+          "rule": "分批向量化；B 保存每批；取消后抛出明确异常；不修改资料状态"
+        },
+        {
+          "signature": "void invalidate(UUID knowledgeBaseId)",
+          "rule": "须在课程锁内调用；仅标记缓存失效，保留活跃读取租约"
+        }
+      ]
+    },
+    "Retriever": {
+      "owner": "C",
+      "caller": "D C 调试控制器",
+      "implementation": "retrieval/DefaultRetriever.java",
+      "methods": [
+        {
+          "signature": "SearchResult search(SearchRequest request, Deadline deadline)",
+          "rule": "内部在课程锁内再次校验范围并取得快照；两路共用快照；返回证据副本后释放"
+        }
+      ]
+    },
+    "EmbeddingProvider": {
+      "owner": "C",
+      "caller": "C",
+      "implementation": "providers/HttpEmbeddingProvider.java",
+      "methods": [
+        {
+          "signature": "EmbeddingBatchResult embedDocuments(List<ChunkDraft> chunks, Deadline deadline)",
+          "rule": "最多 10 片段；按供应商 index 还原片段编号；仅 429 和 5xx 最多重试一次"
+        },
+        {
+          "signature": "QueryVector embedQuery(String query, Deadline deadline)",
+          "rule": "沿用本轮期限；1024 维已归一化向量"
+        }
+      ]
+    },
+    "ChatProvider": {
+      "owner": "D",
+      "caller": "D",
+      "implementation": "providers/HttpChatProvider.java",
+      "methods": [
+        {
+          "signature": "RewriteResult rewrite(String question, List<HistoryTurn> history, Deadline deadline)",
+          "rule": "最多最近两轮 3000 码点；第一轮不调用"
+        },
+        {
+          "signature": "ChatCall generate(String question, List<SearchHit> evidence, Deadline deadline)",
+          "rule": "JSON Object 输出；temperature=0.1；max_tokens=2048；enable_thinking=false"
+        },
+        {
+          "signature": "ChatCall repair(String question, List<SearchHit> evidence, String invalidOutput, String validationError, Deadline deadline)",
+          "rule": "整轮最多一次结构修复；不新增来源不延长期限"
+        }
+      ]
+    }
+  }
+}

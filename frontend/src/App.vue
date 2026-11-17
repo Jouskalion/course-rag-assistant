@@ -1,0 +1,1 @@
+<template><div class="app"><header><h1>课程资料智能问答系统</h1><nav><RouterLink to="/">课程</RouterLink><RouterLink to="/documents">资料</RouterLink><RouterLink to="/chat">问答</RouterLink><RouterLink to="/retrieval">检索</RouterLink></nav></header><main><RouterView /></main></div></template>

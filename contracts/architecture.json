@@ -1,0 +1,98 @@
+{
+  "java_package": "com.courseqa",
+  "database": "SQLite",
+  "business_tables": 11,
+  "modules": [
+    "documents",
+    "retrieval",
+    "qa",
+    "providers",
+    "db",
+    "contracts",
+    "common",
+    "config"
+  ],
+  "owners": {
+    "A": [
+      "frontend/**",
+      ".github/pull_request_template.md",
+      ".nvmrc"
+    ],
+    "B": [
+      "backend/src/main/java/com/courseqa/documents/**",
+      "backend/src/main/java/com/courseqa/db/**",
+      "backend/src/main/resources/db/**",
+      "scripts/*.ps1"
+    ],
+    "C": [
+      "backend/src/main/java/com/courseqa/retrieval/**",
+      "backend/src/main/java/com/courseqa/providers/HttpEmbeddingProvider.java"
+    ],
+    "D": [
+      "backend/src/main/java/com/courseqa/qa/**",
+      "backend/src/main/java/com/courseqa/providers/HttpChatProvider.java",
+      "backend/src/main/java/com/courseqa/providers/ModelHttpClient.java",
+      "backend/src/main/java/com/courseqa/common/**",
+      "backend/src/main/java/com/courseqa/config/**",
+      "backend/src/main/java/com/courseqa/contracts/**",
+      "backend/src/main/java/com/courseqa/Application.java",
+      "backend/pom.xml",
+      "backend/mvnw*",
+      "backend/.mvn/**",
+      "backend/config/**",
+      "backend/src/main/resources/application.yml",
+      "backend/src/main/resources/prompts/**",
+      "contracts/**",
+      "scripts/*.mjs",
+      ".github/workflows/**",
+      "docs/**",
+      "README.md",
+      "AGENTS.md",
+      ".gitignore",
+      ".gitattributes",
+      ".editorconfig"
+    ]
+  },
+  "generated": [
+    "backend/src/main/java/com/courseqa/contracts/dto/**",
+    "frontend/src/api/generated.ts"
+  ],
+  "shared_files": [
+    "contracts/**",
+    "backend/pom.xml",
+    "frontend/package.json",
+    "frontend/package-lock.json",
+    "backend/src/main/resources/application.yml",
+    "backend/src/main/resources/db/migration/**",
+    ".github/workflows/**"
+  ],
+  "file_overrides": {
+    "backend/src/main/java/com/courseqa/common/CourseLocks.java": "B",
+    "contracts/database.json": "B",
+    "docs/DATABASE.md": "B",
+    "docs/START.md": "B",
+    "backend/src/main/java/com/courseqa/contracts/internal/Deadline.java": "D",
+    "backend/src/main/java/com/courseqa/contracts/internal/ParsedPage.java": "B",
+    "backend/src/main/java/com/courseqa/contracts/internal/ChunkDraft.java": "B",
+    "backend/src/main/java/com/courseqa/contracts/internal/EmbeddedChunk.java": "C",
+    "backend/src/main/java/com/courseqa/contracts/internal/EmbeddedBatch.java": "C",
+    "backend/src/main/java/com/courseqa/contracts/internal/EmbeddingBuildSummary.java": "C",
+    "backend/src/main/java/com/courseqa/contracts/internal/ProviderUsage.java": "D",
+    "backend/src/main/java/com/courseqa/contracts/internal/EmbeddingBatchResult.java": "C",
+    "backend/src/main/java/com/courseqa/contracts/internal/QueryVector.java": "C",
+    "backend/src/main/java/com/courseqa/contracts/internal/CatalogChunk.java": "B",
+    "backend/src/main/java/com/courseqa/contracts/internal/CatalogData.java": "B",
+    "backend/src/main/java/com/courseqa/contracts/internal/HistoryTurn.java": "D",
+    "backend/src/main/java/com/courseqa/contracts/internal/RewriteResult.java": "D",
+    "backend/src/main/java/com/courseqa/contracts/internal/ModelBlock.java": "D",
+    "backend/src/main/java/com/courseqa/contracts/internal/ModelAnswer.java": "D",
+    "backend/src/main/java/com/courseqa/contracts/internal/ChatCall.java": "D",
+    "backend/src/main/java/com/courseqa/contracts/port/ScopePort.java": "B",
+    "backend/src/main/java/com/courseqa/contracts/port/CatalogReadPort.java": "B",
+    "backend/src/main/java/com/courseqa/contracts/port/IndexPort.java": "C",
+    "backend/src/main/java/com/courseqa/contracts/port/Retriever.java": "C",
+    "backend/src/main/java/com/courseqa/contracts/port/EmbeddingProvider.java": "C",
+    "backend/src/main/java/com/courseqa/contracts/port/ChatProvider.java": "D"
+  },
+  "resolution_rule": "generated 路径不得手改；其余先取 file_overrides 精确归属，再取 owners 的匹配项。shared_files 表示修改须同步设计，不表示额外人工审批。"
+}

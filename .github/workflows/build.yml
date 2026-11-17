@@ -1,0 +1,33 @@
+name: build
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.22.3'
+      - name: Contract consistency
+        run: node scripts/generate-contracts.mjs --check
+      - name: Backend package
+        working-directory: backend
+        run: |
+          chmod +x mvnw
+          ./mvnw -B -ntp package
+      - name: Frontend build
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run build

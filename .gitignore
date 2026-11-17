@@ -1,0 +1,12 @@
+**/node_modules/
+**/target/
+frontend/dist/
+backend/src/main/resources/static/
+data/
+backend/config/application-local.yml
+.idea/
+.vscode/
+*.log
+.DS_Store
+Thumbs.db
+.codex/
