@@ -16,15 +16,17 @@ import java.util.UUID;
 import java.util.concurrent.CancellationException;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import org.springframework.stereotype.Service;
 
 @Service
 public class DefaultIndexService implements IndexPort {
-    private final EmbeddingProvider embeddings;
+    private final Function<BooleanSupplier, EmbeddingProvider> importEmbeddingProviders;
     private final CatalogSnapshotRegistry snapshots;
 
-    public DefaultIndexService(EmbeddingProvider embeddings, CatalogSnapshotRegistry snapshots) {
-        this.embeddings = embeddings;
+    public DefaultIndexService(Function<BooleanSupplier, EmbeddingProvider> importEmbeddingProviders,
+            CatalogSnapshotRegistry snapshots) {
+        this.importEmbeddingProviders = importEmbeddingProviders;
         this.snapshots = snapshots;
     }
 
@@ -44,6 +46,7 @@ public class DefaultIndexService implements IndexPort {
                 throw RetrievalRules.invalid("向量构建不能包含重复片段编号");
             }
         }
+        EmbeddingProvider embeddings = importEmbeddingProviders.apply(cancelled);
         int completed = 0;
         while (completed < input.size()) {
             checkCancelled(cancelled);
