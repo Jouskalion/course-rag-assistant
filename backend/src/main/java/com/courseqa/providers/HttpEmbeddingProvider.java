@@ -15,9 +15,14 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BooleanSupplier;
+import java.util.function.Function;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
 import tools.jackson.core.StreamReadFeature;
 import tools.jackson.databind.DeserializationFeature;
@@ -30,24 +35,39 @@ public class HttpEmbeddingProvider implements EmbeddingProvider {
     private static final String MODEL = "text-embedding-v4";
     private static final int DIMENSIONS = 1024;
     private static final long RETRY_WAIT_NANOS = TimeUnit.SECONDS.toNanos(1);
-    private final ObjectProvider<ModelHttpClient> clients;
-    private final String configuredModel;
-    private final int configuredDimensions;
-    private final JsonMapper json = JsonMapper.builder()
+    private static final JsonMapper JSON = JsonMapper.builder()
             .enable(StreamReadFeature.STRICT_DUPLICATE_DETECTION)
             .enable(DeserializationFeature.FAIL_ON_TRAILING_TOKENS).build();
 
+    private final ObjectProvider<ModelHttpClient> clients;
+    private final String configuredModel;
+    private final int configuredDimensions;
+    private final BooleanSupplier cancelled;
+
+    @Autowired
     public HttpEmbeddingProvider(ObjectProvider<ModelHttpClient> clients,
             @Value("${app.model.embedding-model}") String configuredModel,
             @Value("${app.model.embedding-dimensions}") int configuredDimensions) {
+        this(clients, configuredModel, configuredDimensions, () -> false);
+    }
+
+    private HttpEmbeddingProvider(ObjectProvider<ModelHttpClient> clients, String configuredModel,
+            int configuredDimensions, BooleanSupplier cancelled) {
+        this.cancelled = cancelled;
         this.clients = clients;
         this.configuredModel = configuredModel;
         this.configuredDimensions = configuredDimensions;
     }
 
+    /** 每次导入单独绑定 B 的取消标记，模型客户端与 JSON 映射器均可复用。 */
+    @Bean
+    Function<BooleanSupplier, EmbeddingProvider> importEmbeddingProviders() {
+        return signal -> new HttpEmbeddingProvider(clients, configuredModel, configuredDimensions, signal);
+    }
+
     @Override
     public EmbeddingBatchResult embedDocuments(List<ChunkDraft> chunks, Deadline deadline) {
-        checkDeadline(deadline);
+        checkActive(deadline);
         if (chunks == null || chunks.isEmpty() || chunks.size() > 10) {
             throw invalidRequest("每次片段向量请求必须包含 1 至 10 个片段");
         }
@@ -66,13 +86,13 @@ public class HttpEmbeddingProvider implements EmbeddingProvider {
         for (int i = 0; i < input.size(); i++) {
             result.add(new EmbeddedChunk(input.get(i).chunkId(), MODEL, DIMENSIONS, response.vectors().get(i)));
         }
-        checkDeadline(deadline);
+        checkActive(deadline);
         return new EmbeddingBatchResult(result, response.usage(), response.actualModel());
     }
 
     @Override
     public QueryVector embedQuery(String query, Deadline deadline) {
-        checkDeadline(deadline);
+        checkActive(deadline);
         if (query == null || query.isBlank() || query.codePointCount(0, query.length()) > 2000) {
             throw invalidRequest("问题向量输入必须为 1 至 2000 码点的非空文字");
         }
@@ -89,18 +109,18 @@ public class HttpEmbeddingProvider implements EmbeddingProvider {
         if (client == null) {
             throw new FeatureNotImplementedException("D", "ModelHttpClient 公共模型请求接入");
         }
-        String body = json.writeValueAsString(Map.of("model", MODEL, "input", inputs,
+        String body = JSON.writeValueAsString(Map.of("model", MODEL, "input", inputs,
                 "dimensions", DIMENSIONS, "encoding_format", "float"));
         for (int attempt = 0; attempt < 2; attempt++) {
-            checkDeadline(deadline);
+            checkActive(deadline);
             String response;
             try {
                 response = client.post("embeddings", body, deadline);
             } catch (ServiceException exception) {
-                checkDeadline(deadline);
+                checkActive(deadline);
                 if (retryableHttpFailure(exception)) {
                     if (attempt == 0) {
-                        waitForRetry(deadline);
+                        waitForRetry(deadline, exception);
                         continue;
                     }
                     throw embeddingFailed("向量服务在一次重试后仍不可用");
@@ -110,9 +130,9 @@ public class HttpEmbeddingProvider implements EmbeddingProvider {
                 }
                 throw exception;
             }
-            checkDeadline(deadline);
+            checkActive(deadline);
             ParsedEmbedding parsed = parse(response, inputs.size());
-            checkDeadline(deadline);
+            checkActive(deadline);
             // 失败请求无可读用量，不能把成功重试的用量冒充两次调用合计。
             return attempt == 0 ? parsed
                     : new ParsedEmbedding(parsed.vectors(), new ProviderUsage(null, null), parsed.actualModel());
@@ -122,7 +142,7 @@ public class HttpEmbeddingProvider implements EmbeddingProvider {
 
     private ParsedEmbedding parse(String response, int expected) {
         try {
-            JsonNode root = json.readTree(response);
+            JsonNode root = JSON.readTree(response);
             if (root == null || !root.isObject() || root.has("error")) {
                 throw embeddingFailed("向量服务响应格式不正确");
             }
@@ -223,10 +243,13 @@ public class HttpEmbeddingProvider implements EmbeddingProvider {
                 || ("MODEL_UNAVAILABLE".equals(code) && failure.httpStatus() >= 500 && failure.httpStatus() <= 599);
     }
 
-    private static void waitForRetry(Deadline deadline) {
-        checkDeadline(deadline);
-        if (deadline.deadlineNanos() - System.nanoTime() <= RETRY_WAIT_NANOS) {
+    private void waitForRetry(Deadline deadline, ServiceException failure) {
+        long remaining = deadline.deadlineNanos() - System.nanoTime();
+        if (remaining <= 0) {
             throw timeout();
+        }
+        if (remaining <= RETRY_WAIT_NANOS) {
+            throw failure;
         }
         try {
             TimeUnit.NANOSECONDS.sleep(RETRY_WAIT_NANOS);
@@ -234,10 +257,13 @@ public class HttpEmbeddingProvider implements EmbeddingProvider {
             Thread.currentThread().interrupt();
             throw interrupted();
         }
-        checkDeadline(deadline);
+        checkActive(deadline);
     }
 
-    private static void checkDeadline(Deadline deadline) {
+    private void checkActive(Deadline deadline) {
+        if (cancelled.getAsBoolean()) {
+            throw new CancellationException("资料导入已取消");
+        }
         if (Thread.currentThread().isInterrupted()) {
             throw interrupted();
         }

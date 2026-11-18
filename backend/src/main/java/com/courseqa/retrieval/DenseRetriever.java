@@ -1,5 +1,6 @@
 package com.courseqa.retrieval;
 
+import com.courseqa.common.ServiceException;
 import com.courseqa.contracts.internal.CatalogChunk;
 import com.courseqa.contracts.internal.Deadline;
 import com.courseqa.contracts.internal.QueryVector;
@@ -7,9 +8,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** 不可变快照内的精确向量检索，向量数组不离开本类。 */
 final class DenseRetriever {
+    private static final Logger LOG = LoggerFactory.getLogger(DenseRetriever.class);
     private final List<CatalogChunk> chunks;
     private final float[][] vectors;
 
@@ -20,8 +24,13 @@ final class DenseRetriever {
             RetrievalRules.checkDeadline(deadline);
             CatalogChunk chunk = chunks.get(i);
             RetrievalRules.checkModel(chunk.model(), chunk.dimensions());
-            vectors[i] = RetrievalRules.normalized(chunk.vector());
+            vectors[i] = RetrievalRules.normalized(chunk.vector(), () -> invalidStoredVector(chunk));
         }
+    }
+
+    private static ServiceException invalidStoredVector(CatalogChunk chunk) {
+        LOG.error("课程 {} 资料 {} 片段 {} 的已存向量无效", chunk.knowledgeBaseId(), chunk.documentId(), chunk.chunkId());
+        return new ServiceException("INTERNAL_ERROR", 500, "课程已保存的片段向量无效，请检查并修复该资料的向量", false);
     }
 
     List<RankedChunk> search(QueryVector query, Set<UUID> documentIds, Deadline deadline) {

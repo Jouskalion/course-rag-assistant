@@ -6,6 +6,7 @@ import com.courseqa.contracts.internal.ChunkDraft;
 import com.courseqa.contracts.internal.Deadline;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.Supplier;
 
 /** C 模块的固定参数和内部调用校验；HTTP 与问答使用相同规则。 */
 final class RetrievalRules {
@@ -94,18 +95,22 @@ final class RetrievalRules {
     }
 
     static float[] normalized(float[] vector) {
+        return normalized(vector, RetrievalRules::invalidVector);
+    }
+
+    static float[] normalized(float[] vector, Supplier<ServiceException> invalid) {
         if (vector == null || vector.length != DIMENSIONS) {
-            throw invalidVector();
+            throw invalid.get();
         }
         double squaredNorm = 0;
         for (float value : vector) {
             if (!Float.isFinite(value)) {
-                throw invalidVector();
+                throw invalid.get();
             }
             squaredNorm += (double) value * value;
         }
         if (!(squaredNorm > 0) || !Double.isFinite(squaredNorm)) {
-            throw invalidVector();
+            throw invalid.get();
         }
         double norm = Math.sqrt(squaredNorm);
         float[] normalized = new float[vector.length];

@@ -7,20 +7,21 @@ import com.courseqa.contracts.internal.Deadline;
 import com.courseqa.contracts.port.CatalogReadPort;
 import com.courseqa.contracts.port.ScopePort;
 import jakarta.annotation.PreDestroy;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Component;
 
 @Component
 public class CatalogSnapshotRegistry {
+    private static final int MAX_CACHED_COURSES = 4;
     private final CourseLocks courseLocks;
     private final ObjectProvider<ScopePort> scopes;
     private final ObjectProvider<CatalogReadPort> catalogs;
     private final Object lifecycle = new Object();
-    private final Map<UUID, CatalogSnapshot> current = new HashMap<>();
+    private final LinkedHashMap<UUID, CatalogSnapshot> current =
+            new LinkedHashMap<>(MAX_CACHED_COURSES, 0.75f, true);
     private boolean closed;
 
     public CatalogSnapshotRegistry(CourseLocks courseLocks, ObjectProvider<ScopePort> scopes,
@@ -53,17 +54,26 @@ public class CatalogSnapshotRegistry {
             }
             // 同一课程锁内读取完整数据并同时构建两路；供应商调用在离开此处后执行。
             CatalogSnapshot created = new CatalogSnapshot(courseId, catalog.load(courseId), deadline);
+            CatalogSnapshot evicted = null;
+            CatalogSnapshotLease lease;
             try {
                 RetrievalRules.checkDeadline(deadline);
                 synchronized (lifecycle) {
                     ensureOpen();
                     current.put(courseId, created);
-                    return created.acquire();
+                    lease = created.acquire();
+                    if (current.size() > MAX_CACHED_COURSES) {
+                        evicted = current.pollFirstEntry().getValue();
+                    }
                 }
             } catch (RuntimeException exception) {
                 created.retire();
                 throw exception;
             }
+            if (evicted != null) {
+                evicted.retire();
+            }
+            return lease;
         });
     }
 
