@@ -3,5 +3,5 @@
 # 未配置模型时可以启动骨架，但真实向量化和问答不能执行。
 app:
   model:
-    base-url: ""
-    api-key: ""
+    base-url: ${MODEL_BASE_URL:}
+    api-key: ${DASHSCOPE_API_KEY:}
