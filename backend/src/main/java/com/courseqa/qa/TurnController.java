@@ -1,39 +1,43 @@
-// 负责人 D。业务未实现时明确返回 501，不返回虚构业务数据。
 package com.courseqa.qa;
-import com.courseqa.contracts.dto.*;
-import com.courseqa.common.FeatureNotImplementedException;
-import jakarta.validation.Valid;
-import java.util.UUID;
-import org.springframework.web.bind.annotation.*;
+
+import com.courseqa.contracts.dto.Feedback;
+import com.courseqa.contracts.dto.Turn;
+import com.courseqa.contracts.dto.TurnList;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.core.io.Resource;
-import org.springframework.web.multipart.MultipartFile;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.bind.annotation.*;
+
 @RestController
 @RequestMapping("/api/v1")
 public class TurnController {
-    // 会话历史 按创建时间升序
-    @GetMapping(value="/conversations/{conversation_id}/turns")
-    public ResponseEntity<TurnList> listTurns(@PathVariable(value="conversation_id") UUID conversation_id, @RequestParam(value="page", defaultValue="1") Integer page, @RequestParam(value="page_size", defaultValue="20") Integer page_size) {
-        throw new FeatureNotImplementedException("D","listTurns");
+    private final TurnService service;
+    public TurnController(TurnService service) { this.service = service; }
+
+    @GetMapping("/conversations/{conversation_id}/turns")
+    public TurnList listTurns(@PathVariable("conversation_id") String id, @RequestParam MultiValueMap<String,String> query) {
+        return service.list(QaRequests.uuid(id), QaRequests.page(query, false));
     }
-    // 异步提问
-    @PostMapping(value="/conversations/{conversation_id}/turns")
-    public ResponseEntity<Turn> createTurn(@PathVariable(value="conversation_id") UUID conversation_id, @Valid @RequestBody TurnCreate body) {
-        throw new FeatureNotImplementedException("D","createTurn");
+
+    @PostMapping(value="/conversations/{conversation_id}/turns", consumes=MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Turn> createTurn(@PathVariable("conversation_id") String id, @RequestBody String body) {
+        return response(service.create(QaRequests.uuid(id), QaRequests.question(body)));
     }
-    // 问答状态与结果
-    @GetMapping(value="/turns/{turn_id}")
-    public ResponseEntity<Turn> getTurn(@PathVariable(value="turn_id") UUID turn_id) {
-        throw new FeatureNotImplementedException("D","getTurn");
+
+    @GetMapping("/turns/{turn_id}")
+    public Turn getTurn(@PathVariable("turn_id") String id) { return service.get(QaRequests.uuid(id)); }
+
+    @PostMapping(value="/turns/{turn_id}/retry", consumes=MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Turn> retryTurn(@PathVariable("turn_id") String id, @RequestBody String body) {
+        return response(service.retry(QaRequests.uuid(id), QaRequests.retry(body).clientRequestId()));
     }
-    // 主动重试 创建新记录并保留原记录
-    @PostMapping(value="/turns/{turn_id}/retry")
-    public ResponseEntity<Turn> retryTurn(@PathVariable(value="turn_id") UUID turn_id, @Valid @RequestBody TurnRetry body) {
-        throw new FeatureNotImplementedException("D","retryTurn");
+
+    @PutMapping(value="/turns/{turn_id}/feedback", consumes=MediaType.APPLICATION_JSON_VALUE)
+    public Feedback putFeedback(@PathVariable("turn_id") String id, @RequestBody String body) {
+        return service.feedback(QaRequests.uuid(id), QaRequests.feedback(body));
     }
-    // 修改 answered 回答的共享反馈
-    @PutMapping(value="/turns/{turn_id}/feedback")
-    public ResponseEntity<Feedback> putFeedback(@PathVariable(value="turn_id") UUID turn_id, @Valid @RequestBody FeedbackWrite body) {
-        throw new FeatureNotImplementedException("D","putFeedback");
+
+    private ResponseEntity<Turn> response(TurnService.Submission submission) {
+        return ResponseEntity.status(submission.created() ? 202 : 200).body(submission.turn());
     }
 }
