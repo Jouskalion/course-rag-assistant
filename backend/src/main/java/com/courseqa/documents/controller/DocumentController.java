@@ -1,5 +1,5 @@
 // 负责人 B。业务未实现时明确返回 501，不返回虚构业务数据。
-package com.courseqa.documents;
+package com.courseqa.documents.controller;
 import com.courseqa.contracts.dto.*;
 import com.courseqa.common.FeatureNotImplementedException;
 import jakarta.validation.Valid;

@@ -1,6 +1,6 @@
 # 项目实现约定
 
-遵守 contracts/openapi.json、contracts/architecture.json、contracts/port 的实际 Java 接口及数据库迁移。先看 docs/OWNERSHIP.md 确认负责文件。采用一个 Java 后端和一个 Vue 前端，不增加微服务、ORM、其他数据库或登录体系。
+遵守 contracts/openapi.json、contracts/architecture.json、contracts/port 的实际 Java 接口及数据库迁移。先看 docs/OWNERSHIP.md 确认负责文件。采用一个 Java 后端和一个 Vue 前端，不增加微服务、其他数据库或登录体系。资料模块 B 使用 MyBatis-Plus 作为 ORM，仅限 B 负责的 documents/db 包；实体类使用 Lombok @Data 消除 getter/setter 样板代码。详见 docs/DECISIONS.md。
 
 修改公共字段时先更新 OpenAPI，再运行 node scripts/generate-contracts.mjs；不手改生成的 Java DTO 或 TypeScript。公共结构变化单独记录影响。各业务模块自己实现控制器、服务及仓储；通过 contracts/port 使用其他模块，不依赖他人的实现类。
 

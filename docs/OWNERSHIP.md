@@ -55,4 +55,8 @@ A 只调用 HTTP。B 的导入服务通过 IndexPort 调用 C；C 通过 ScopePo
 
 ModelHttpClient 归 D，HttpEmbeddingProvider 归 C，HttpChatProvider 归 D。SQLite 写入工具归 B，问答仓储归 D；不是所有数据库代码都由 B 编写。B 修改资料状态，C 只产生向量和管理索引，D 修改问答状态。
 
+MyBatis-Plus 依赖由 B 在 `backend/pom.xml` 中增加，仅用于 documents/db 下的 B 自有仓储与实体。MP 与现有 Spring JDBC 共存，`WriteTransactions` 与 `CourseLocks` 仍是所有写操作的统一入口。
+
+Lombok 依赖由 B 在 `backend/pom.xml` 中增加（provided，固定 1.18.34），仅用于 documents/entity 下 B 自有实体的 getter/setter 生成。生成的 DTO 由契约脚本产出，不使用 Lombok；运行时不引入 Lombok 包。
+
 公共接口、迁移、依赖版本与模块边界发生变化时，PR 必须列出影响并先更新设计约定。普通模块内部修改由 AI 检查后合并。

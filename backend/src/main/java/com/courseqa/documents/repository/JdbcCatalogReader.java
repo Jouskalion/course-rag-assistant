@@ -1,5 +1,4 @@
-// 负责人 B。实现此类并通过 Spring Bean 装配接入。
-package com.courseqa.documents;
+package com.courseqa.documents.repository;
 import com.courseqa.contracts.port.*;
 import com.courseqa.contracts.dto.*;
 import com.courseqa.contracts.internal.*;

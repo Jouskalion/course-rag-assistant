@@ -26,7 +26,7 @@ D 的问答处理、执行期限、引用和 A/B/C 对接方式见 [成员 D 问
 - 内部方法以 `backend/src/main/java/com/courseqa/contracts/` 下 port 接口与 internal record 为准。
 - 数据库以 `backend/src/main/resources/db/migration/V001__init.sql` 为准。已有真实数据后不改旧迁移；新增结构使用后续版本并由 B 扩展迁移器。
 - `contracts/database.json` 和 `contracts/internal-ports.json` 是当前设计的结构化索引；修改对应定义时同步更新，由 AI 审查一致性。
-- 方案的技术边界为单机、单后端进程、SQLite、Vue、Java。没有用户登录和公开云部署。
+- 方案的技术边界为单机、单后端进程、SQLite、Vue、Java。没有用户登录和公开云部署。资料模块 B 使用 MyBatis-Plus，实体类使用 Lombok @Data。详见 docs/DECISIONS.md。
 
 ## 快速启动
 
