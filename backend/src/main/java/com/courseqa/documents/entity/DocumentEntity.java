@@ -7,7 +7,7 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import java.time.Instant;
 import lombok.Data;
 @Data
-@TableName("documents")
+@TableName(value = "documents", autoResultMap = true)
 public class DocumentEntity {
     @TableId(value = "id", type = IdType.INPUT)
     private String id;
@@ -37,10 +37,10 @@ public class DocumentEntity {
     private String errorJson;
     @TableField("active_job_id")
     private String activeJobId;
-    @TableField("created_at")
+    @TableField(value = "created_at", typeHandler = InstantUtcHandler.class)
     private Instant createdAt;
-    @TableField("updated_at")
+    @TableField(value = "updated_at", typeHandler = InstantUtcHandler.class)
     private Instant updatedAt;
-    @TableField("deleted_at")
+    @TableField(value = "deleted_at", typeHandler = InstantUtcHandler.class)
     private Instant deletedAt;
 }

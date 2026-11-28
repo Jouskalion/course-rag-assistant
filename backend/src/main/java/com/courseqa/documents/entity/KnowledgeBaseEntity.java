@@ -7,7 +7,7 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import java.time.Instant;
 import lombok.Data;
 @Data
-@TableName("knowledge_bases")
+@TableName(value = "knowledge_bases", autoResultMap = true)
 public class KnowledgeBaseEntity {
     @TableId(value = "id", type = IdType.INPUT)
     private String id;
@@ -19,8 +19,8 @@ public class KnowledgeBaseEntity {
     private String embeddingModel;
     @TableField("embedding_dimensions")
     private Integer embeddingDimensions;
-    @TableField("created_at")
+    @TableField(value = "created_at", typeHandler = InstantUtcHandler.class)
     private Instant createdAt;
-    @TableField("updated_at")
+    @TableField(value = "updated_at", typeHandler = InstantUtcHandler.class)
     private Instant updatedAt;
 }
