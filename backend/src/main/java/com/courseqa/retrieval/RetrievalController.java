@@ -1,19 +1,28 @@
-// 负责人 C。业务未实现时明确返回 501，不返回虚构业务数据。
 package com.courseqa.retrieval;
-import com.courseqa.contracts.dto.*;
-import com.courseqa.common.FeatureNotImplementedException;
-import jakarta.validation.Valid;
-import java.util.UUID;
-import org.springframework.web.bind.annotation.*;
+
+import com.courseqa.contracts.dto.SearchResult;
+import com.courseqa.contracts.internal.Deadline;
+import com.courseqa.contracts.port.Retriever;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.core.io.Resource;
-import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 @RestController
 @RequestMapping("/api/v1")
 public class RetrievalController {
-    // 检索调试 复用正式检索实现
-    @PostMapping(value="/retrieval/search")
-    public ResponseEntity<SearchResult> search(@Valid @RequestBody SearchRequest body) {
-        throw new FeatureNotImplementedException("C","search");
+    private final Retriever retriever;
+    private final SearchRequestReader requests = new SearchRequestReader();
+
+    public RetrievalController(Retriever retriever) {
+        this.retriever = retriever;
+    }
+
+    @PostMapping(value = "/retrieval/search", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<SearchResult> search(@RequestBody String body) {
+        Deadline deadline = new Deadline(System.nanoTime() + RetrievalRules.SEARCH_NANOS);
+        return ResponseEntity.ok(retriever.search(requests.read(body), deadline));
     }
 }
