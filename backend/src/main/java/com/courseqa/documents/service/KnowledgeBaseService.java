@@ -72,17 +72,20 @@ public class KnowledgeBaseService extends ServiceImpl<KnowledgeBaseRepository, K
 
     public KnowledgeBase update(UUID knowledgeBaseId, KnowledgeBaseUpdate body) {
         String id = key(knowledgeBaseId);
-        KnowledgeBaseEntity entity = getById(id);
-        if (entity == null) throw notFound();
         String name = body.name() == null ? "" : body.name().trim();
         validateName(name);
-        entity.setName(name);
-        entity.setDescription(body.description());
-        entity.setUpdatedAt(Instant.now());
-        transactions.execute(() -> {
-            updateById(entity);
-            return null;
-        });
+        Instant updatedAt = Instant.now();
+        // 与 delete / 会话写路径使用同一门课程锁：DELETE 提交后这里才能读到最新状态，
+        // 不会出现先读到旧行、再更新 0 行却返回 200 的竞态。
+        KnowledgeBaseEntity entity = locks.withLock(knowledgeBaseId, () -> transactions.execute(() -> {
+            KnowledgeBaseEntity current = getById(id);
+            if (current == null) throw notFound();
+            current.setName(name);
+            current.setDescription(body.description());
+            current.setUpdatedAt(updatedAt);
+            if (!updateById(current)) throw notFound();
+            return current;
+        }));
         return toDto(entity);
     }
 
