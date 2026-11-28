@@ -1,4 +1,4 @@
-// 负责人 B。仅映射 V001 中的 documents 表，供资料仓储和范围校验使用。
+// 负责人 B。
 package com.courseqa.documents.entity;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;

@@ -1,4 +1,4 @@
-// 负责人 B。B01：课程接口业务实现，MyBatis-Plus 链式写法。
+// 负责人 B。
 package com.courseqa.documents.service;
 import com.courseqa.documents.repository.KnowledgeBaseRepository;
 import com.courseqa.documents.entity.KnowledgeBaseEntity;
@@ -44,9 +44,7 @@ public class KnowledgeBaseService extends ServiceImpl<KnowledgeBaseRepository, K
     }
 
     public KnowledgeBase create(KnowledgeBaseCreate body) {
-        // description 的“省略 vs 显式 null”由 DTO 的 @JsonSetter(nulls = FAIL) 区分：
-        // 省略时这里是 null（走默认值），显式 null 在反序列化阶段已被拦截为 422。
-        String name = body.name() == null ? "" : body.name().trim();
+        String name = body.name() == null ? "" : body.name().strip();
         validateName(name);
         Instant now = Instant.now();
         KnowledgeBaseEntity entity = new KnowledgeBaseEntity();
@@ -72,11 +70,10 @@ public class KnowledgeBaseService extends ServiceImpl<KnowledgeBaseRepository, K
 
     public KnowledgeBase update(UUID knowledgeBaseId, KnowledgeBaseUpdate body) {
         String id = key(knowledgeBaseId);
-        String name = body.name() == null ? "" : body.name().trim();
+        String name = body.name() == null ? "" : body.name().strip();
         validateName(name);
         Instant updatedAt = Instant.now();
-        // 与 delete / 会话写路径使用同一门课程锁：DELETE 提交后这里才能读到最新状态，
-        // 不会出现先读到旧行、再更新 0 行却返回 200 的竞态。
+        // 与 delete 共用课程锁，避免读后删导致更新 0 行仍返回 200。
         KnowledgeBaseEntity entity = locks.withLock(knowledgeBaseId, () -> transactions.execute(() -> {
             KnowledgeBaseEntity current = getById(id);
             if (current == null) throw notFound();
@@ -100,8 +97,7 @@ public class KnowledgeBaseService extends ServiceImpl<KnowledgeBaseRepository, K
             if (documents > 0 || getBaseMapper().countConversations(id) > 0 || getBaseMapper().countActiveJobs(id) > 0) {
                 throw new ServiceException("KNOWLEDGE_BASE_NOT_EMPTY", 409, "课程仍有资料、会话或活动任务", false);
             }
-            // 前置校验忽略 deleted 墓碑，但外键 RESTRICT 不允许留下子行。
-            // 先物理删除本课程的资料墓碑，页/片段/向量/终态任务由外键级联清理，再删父课程。
+            // 前置校验忽略墓碑，但 FK RESTRICT 要求先物理删墓碑，子表由级联清理。
             documentService.lambdaUpdate()
                     .eq(DocumentEntity::getKnowledgeBaseId, id)
                     .remove();

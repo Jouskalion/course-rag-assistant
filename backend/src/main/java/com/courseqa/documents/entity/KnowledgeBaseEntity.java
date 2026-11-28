@@ -1,4 +1,4 @@
-// 负责人 B。仅映射 V001 中的 knowledge_bases 表，不对外暴露。
+// 负责人 B。
 package com.courseqa.documents.entity;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;

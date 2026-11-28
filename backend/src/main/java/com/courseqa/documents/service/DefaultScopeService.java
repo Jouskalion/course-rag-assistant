@@ -1,4 +1,4 @@
-// 负责人 B。实现 ScopePort，供 C、D 通过接口调用，不暴露仓储实现。
+// 负责人 B。
 package com.courseqa.documents.service;
 import com.courseqa.documents.repository.DocumentRepository;
 import com.courseqa.documents.entity.DocumentEntity;

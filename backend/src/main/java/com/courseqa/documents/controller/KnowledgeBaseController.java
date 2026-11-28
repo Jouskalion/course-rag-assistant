@@ -1,4 +1,4 @@
-// 负责人 B。B01：课程接口已接入真实实现，未实现的资料接口仍在其他控制器返回 501。
+// 负责人 B。
 package com.courseqa.documents.controller;
 import com.courseqa.common.ServiceException;
 import com.courseqa.documents.service.KnowledgeBaseService;
@@ -41,9 +41,7 @@ public class KnowledgeBaseController {
 
     @PostMapping(value = "/knowledge-bases")
     public ResponseEntity<KnowledgeBase> createKnowledgeBase(@RequestBody Map<String, Object> raw) {
-        // 契约总则：可选字段省略时用默认值，显式 null 不等于省略。
-        // description 在 DTO 中是 String，省略与显式 null 都会变成 Java null，
-        // 因此在构造 DTO 前从原始 JSON 区分：键存在且值为 null 必须拒绝。
+        // 显式 null 与省略不同，需从原始 JSON 区分。
         if (raw.containsKey("description") && raw.get("description") == null) {
             throw invalid("description 显式为 null 不等于省略");
         }
@@ -78,7 +76,6 @@ public class KnowledgeBaseController {
     }
 
     private <T> void validate(T body) {
-        // 与 @Valid 触发 MethodArgumentNotValidException 时的响应保持一致。
         if (!validator.validate(body).isEmpty()) throw invalid("请求字段或格式不符合接口约定");
     }
 
