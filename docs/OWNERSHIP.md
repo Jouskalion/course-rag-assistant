@@ -43,7 +43,7 @@ course-rag-assistant/
 | 成员 | 现有关键文件 | 继续实现或新增的文件 |
 | --- | --- | --- |
 | A | pages/CoursesView.vue、DocumentsView.vue、ChatView.vue、RetrievalView.vue；api/http.ts；stores/workspace.ts | components/UploadQueue.vue、CitationCard.vue、PdfViewer.vue、AnswerBlock.vue；api/documents.ts、qa.ts、retrieval.ts |
-| B | documents/KnowledgeBaseController.java、DocumentController.java、ImportJobController.java、DefaultScopeService.java、JdbcCatalogReader.java、PdfPageExtractor.java、PageChunker.java、ImportWorker.java；db/DatabaseConfig.java、WriteTransactions.java | documents/DocumentService.java、DocumentRepository.java、ImportJobRepository.java；db/MigrationRunner.java（将初始迁移拓展为按版本顺序执行） |
+| B | documents/controller/KnowledgeBaseController.java、DocumentController.java、ImportJobController.java；documents/service/DefaultScopeService.java、PdfPageExtractor.java、PageChunker.java、ImportWorker.java；documents/repository/JdbcCatalogReader.java；db/DatabaseConfig.java、WriteTransactions.java | documents/service/DocumentService.java、documents/repository/DocumentRepository.java、ImportJobRepository.java；db/MigrationRunner.java（将初始迁移拓展为按版本顺序执行） |
 | C | retrieval/RetrievalController.java、DefaultRetriever.java、DefaultIndexService.java；providers/HttpEmbeddingProvider.java | retrieval/LuceneBm25Index.java、TechnicalTerms.java、DenseRetriever.java、RrfFusion.java、CatalogSnapshotRegistry.java、CatalogSnapshotLease.java |
 | D | qa/ConversationController.java、TurnController.java、TurnWorker.java、ModelAnswerValidator.java、CitationMapper.java；providers/ModelHttpClient.java、HttpChatProvider.java | qa/ConversationService.java、ConversationRepository.java、TurnService.java、TurnRepository.java、FeedbackRepository.java；config/ExecutorsConfig.java |
 

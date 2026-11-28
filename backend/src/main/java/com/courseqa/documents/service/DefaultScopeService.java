@@ -21,14 +21,18 @@ import java.util.stream.Collectors;
 @Service
 public class DefaultScopeService extends ServiceImpl<DocumentRepository, DocumentEntity> implements ScopePort {
     private final Path dataRoot;
+    private final KnowledgeBaseService knowledgeBaseService;
 
-    public DefaultScopeService(@Value("${app.home}") String appHome,
+    public DefaultScopeService(KnowledgeBaseService knowledgeBaseService,
+                               @Value("${app.home}") String appHome,
                                @Value("${app.data-dir}") String dataDir) {
+        this.knowledgeBaseService = knowledgeBaseService;
         this.dataRoot = Path.of(appHome).toAbsolutePath().normalize().resolve(dataDir).normalize();
     }
 
     @Override
     public List<UUID> resolve(UUID knowledgeBaseId, String scope, List<UUID> documentIds) {
+        validateKnowledgeBase(knowledgeBaseId);
         String knowledgeBase = key(knowledgeBaseId);
         if ("all".equals(scope)) {
             return lambdaQuery()
@@ -44,7 +48,7 @@ public class DefaultScopeService extends ServiceImpl<DocumentRepository, Documen
                             .toList();
         }
         if ("selected".equals(scope)) {
-            validateFixed(knowledgeBaseId, documentIds);
+            validateDocuments(knowledgeBaseId, documentIds);
             return List.copyOf(new LinkedHashSet<>(documentIds));
         }
         throw invalid("scope 只能是 all 或 selected");
@@ -52,6 +56,11 @@ public class DefaultScopeService extends ServiceImpl<DocumentRepository, Documen
 
     @Override
     public void validateFixed(UUID knowledgeBaseId, List<UUID> documentIds) {
+        validateKnowledgeBase(knowledgeBaseId);
+        validateDocuments(knowledgeBaseId, documentIds);
+    }
+
+    private void validateDocuments(UUID knowledgeBaseId, List<UUID> documentIds) {
         if (documentIds == null || documentIds.isEmpty()) {
             throw new ServiceException("EMPTY_SCOPE", 422, "资料范围不能为空", false);
         }
@@ -103,7 +112,13 @@ public class DefaultScopeService extends ServiceImpl<DocumentRepository, Documen
         return ids.stream().map(this::key).collect(Collectors.toCollection(LinkedHashSet::new));
     }
 
+    private void validateKnowledgeBase(UUID knowledgeBaseId) {
+        if (knowledgeBaseService.getById(key(knowledgeBaseId)) == null) throw notFound();
+    }
+
     private String key(UUID id) { return id.toString().toLowerCase(Locale.ROOT); }
+
+    private ServiceException notFound() { return new ServiceException("NOT_FOUND", 404, "课程不存在", false); }
 
     private ServiceException invalid(String message) { return new ServiceException("INVALID_REQUEST", 422, message, false); }
 }

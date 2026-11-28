@@ -85,7 +85,7 @@
     "ScopePort": {
       "owner": "B",
       "caller": "D C",
-      "implementation": "documents/DefaultScopeService.java",
+      "implementation": "documents/service/DefaultScopeService.java",
       "methods": [
         {
           "signature": "List<UUID> resolve(UUID knowledgeBaseId, String scope, List<UUID> documentIds)",
@@ -104,7 +104,7 @@
     "CatalogReadPort": {
       "owner": "B",
       "caller": "C",
-      "implementation": "documents/JdbcCatalogReader.java",
+      "implementation": "documents/repository/JdbcCatalogReader.java",
       "methods": [
         {
           "signature": "CatalogData load(UUID knowledgeBaseId)",

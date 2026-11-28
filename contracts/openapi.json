@@ -1593,7 +1593,7 @@
         "properties": {
           "name": {
             "type": "string",
-            "description": "名称",
+            "description": "去掉首尾空白后 1 至 80 码点",
             "minLength": 1,
             "maxLength": 80
           },

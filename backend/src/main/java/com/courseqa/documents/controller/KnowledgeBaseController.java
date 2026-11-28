@@ -6,7 +6,6 @@ import com.courseqa.contracts.dto.KnowledgeBase;
 import com.courseqa.contracts.dto.KnowledgeBaseCreate;
 import com.courseqa.contracts.dto.KnowledgeBaseList;
 import com.courseqa.contracts.dto.KnowledgeBaseUpdate;
-import jakarta.validation.Valid;
 import jakarta.validation.Validator;
 import java.util.Map;
 import java.util.UUID;
@@ -52,7 +51,8 @@ public class KnowledgeBaseController {
         for (String key : raw.keySet()) {
             if (!"name".equals(key) && !"description".equals(key)) throw invalid("存在未知字段: " + key);
         }
-        KnowledgeBaseCreate body = new KnowledgeBaseCreate((String) nameValue, (String) descriptionValue);
+        String name = nameValue == null ? null : ((String) nameValue).strip();
+        KnowledgeBaseCreate body = new KnowledgeBaseCreate(name, (String) descriptionValue);
         validate(body);
         return ResponseEntity.status(HttpStatus.CREATED).body(service.create(body));
     }
@@ -65,8 +65,12 @@ public class KnowledgeBaseController {
     @PatchMapping(value = "/knowledge-bases/{knowledge_base_id}")
     public ResponseEntity<KnowledgeBase> updateKnowledgeBase(
             @PathVariable(value = "knowledge_base_id") UUID knowledgeBaseId,
-            @Valid @RequestBody KnowledgeBaseUpdate body) {
-        return ResponseEntity.ok(service.update(knowledgeBaseId, body));
+            @RequestBody KnowledgeBaseUpdate body) {
+        KnowledgeBaseUpdate normalized = new KnowledgeBaseUpdate(
+                body.name() == null ? null : body.name().strip(),
+                body.description());
+        validate(normalized);
+        return ResponseEntity.ok(service.update(knowledgeBaseId, normalized));
     }
 
     @DeleteMapping(value = "/knowledge-bases/{knowledge_base_id}")

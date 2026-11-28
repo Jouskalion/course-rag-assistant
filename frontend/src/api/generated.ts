@@ -46,7 +46,7 @@ export interface KnowledgeBaseCreate {
 }
 
 export interface KnowledgeBaseUpdate {
-  /** 名称 */
+  /** 去掉首尾空白后 1 至 80 码点 */
   name: string;
   /** 说明 */
   description: string;
