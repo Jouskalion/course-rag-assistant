@@ -43,7 +43,7 @@ course-rag-assistant/
 | 成员 | 现有关键文件 | 继续实现或新增的文件 |
 | --- | --- | --- |
 | A | pages/CoursesView.vue、DocumentsView.vue、ChatView.vue、RetrievalView.vue；api/http.ts；stores/workspace.ts | components/UploadQueue.vue、CitationCard.vue、PdfViewer.vue、AnswerBlock.vue；api/documents.ts、qa.ts、retrieval.ts |
-| B | documents/KnowledgeBaseController.java、DocumentController.java、ImportJobController.java、DefaultScopeService.java、JdbcCatalogReader.java、PdfPageExtractor.java、PageChunker.java、ImportWorker.java；db/DatabaseConfig.java、WriteTransactions.java | documents/DocumentService.java、DocumentRepository.java、ImportJobRepository.java；db/MigrationRunner.java（将初始迁移拓展为按版本顺序执行） |
+| B | documents/controller/KnowledgeBaseController.java、DocumentController.java、ImportJobController.java；documents/service/DefaultScopeService.java、PdfPageExtractor.java、PageChunker.java、ImportWorker.java；documents/repository/JdbcCatalogReader.java；db/DatabaseConfig.java、WriteTransactions.java | documents/service/DocumentService.java、documents/repository/DocumentRepository.java、ImportJobRepository.java；db/MigrationRunner.java（将初始迁移拓展为按版本顺序执行） |
 | C | retrieval/RetrievalController.java、DefaultRetriever.java、DefaultIndexService.java；providers/HttpEmbeddingProvider.java | retrieval/LuceneBm25Index.java、TechnicalTerms.java、DenseRetriever.java、RrfFusion.java、CatalogSnapshotRegistry.java、CatalogSnapshotLease.java |
 | D | qa/ConversationController.java、TurnController.java、TurnWorker.java、ModelAnswerValidator.java、CitationMapper.java；providers/ModelHttpClient.java、HttpChatProvider.java | qa/ConversationService.java、ConversationRepository.java、TurnService.java、TurnRepository.java、FeedbackRepository.java；config/ExecutorsConfig.java |
 
@@ -54,5 +54,9 @@ course-rag-assistant/
 A 只调用 HTTP。B 的导入服务通过 IndexPort 调用 C；C 通过 ScopePort 与 CatalogReadPort 使用 B 的资料；D 通过 Retriever 使用 C。providers 只依赖公共类型和 HTTP 基础，不能依赖 documents、retrieval 或 qa 的实现类。业务模块通过 contracts/port 交互，避免互相构造实现类和循环注入。
 
 ModelHttpClient 归 D，HttpEmbeddingProvider 归 C，HttpChatProvider 归 D。SQLite 写入工具归 B，问答仓储归 D；不是所有数据库代码都由 B 编写。B 修改资料状态，C 只产生向量和管理索引，D 修改问答状态。
+
+MyBatis-Plus 依赖由 B 在 `backend/pom.xml` 中增加，仅用于 documents/db 下的 B 自有仓储与实体。MP 与现有 Spring JDBC 共存，`WriteTransactions` 与 `CourseLocks` 仍是所有写操作的统一入口。
+
+Lombok 依赖由 B 在 `backend/pom.xml` 中增加（provided，固定 1.18.34），仅用于 documents/entity 下 B 自有实体的 getter/setter 生成。生成的 DTO 由契约脚本产出，不使用 Lombok；运行时不引入 Lombok 包。
 
 公共接口、迁移、依赖版本与模块边界发生变化时，PR 必须列出影响并先更新设计约定。普通模块内部修改由 AI 检查后合并。

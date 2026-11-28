@@ -20,7 +20,7 @@ C 的索引构建服务不依赖 B 的导入服务；只用 B 传入的保存回
 
 ### ScopePort
 
-定义：contracts/port/ScopePort.java。实现：documents/DefaultScopeService.java。主责 B，调用方 D C。
+定义：contracts/port/ScopePort.java。实现：documents/service/DefaultScopeService.java。主责 B，调用方 D C。
 
 ```java
 List<UUID> resolve(UUID knowledgeBaseId, String scope, List<UUID> documentIds);
@@ -42,7 +42,7 @@ D 读取历史回答时批量调用，填充 Citation.source_available，不直�
 
 ### CatalogReadPort
 
-定义：contracts/port/CatalogReadPort.java。实现：documents/JdbcCatalogReader.java。主责 B，调用方 C。
+定义：contracts/port/CatalogReadPort.java。实现：documents/repository/JdbcCatalogReader.java。主责 B，调用方 C。
 
 ```java
 CatalogData load(UUID knowledgeBaseId);

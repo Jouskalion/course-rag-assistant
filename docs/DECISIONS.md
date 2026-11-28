@@ -7,6 +7,8 @@
 5. 普通PR用AI审查和自动构建，无固定同伴审批；公共结构变化单独说明影响后再决定。
 6. 不提供样例数据、模拟业务响应或完整测试计划。已有业务接口是明确501入口，真实数据接入依赖B先交付解析结果。
 7. 交付物是开发起点，业务逻辑由四人实现。后端空库初始化、健康接口、前端页面骨架与构建流程已提供。
+8. 角色 B 在 documents/db 模块使用 MyBatis-Plus 作为 ORM，固定 `com.baomidou:mybatis-plus-spring-boot4-starter:3.5.18.1`。该依赖只服务于 B 的资料仓储，Spring JDBC 与 MP 共存。pom.xml 属公共文件，此项变更已在 AGENTS.md、OWNERSHIP.md 同步说明。
+9. B 的实体类使用 Lombok `@Data` 生成 getter/setter，固定 `org.projectlombok:lombok:1.18.34`（provided，编译期注解处理器，不进入运行时包）。Lombok 仅用于 B 的 entity 类，不改变公共 DTO、契约或接口。依赖版本已在 AGENTS.md、OWNERSHIP.md 同步说明。
 
 ## 技术依据
 

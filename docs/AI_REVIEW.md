@@ -25,7 +25,7 @@
 
 ## AI 必查内容
 
-- 文件是否放在正确模块，是否重复公共类型，是否绕过接口直接依赖其他模块实现类。
+- 文件是否放在正确模块，是否重复公共类型，是否绕过接口直接依赖其他模块实现类。MyBatis-Plus 只允许出现在 B 的 documents/db 模块，pom 依赖版本须与 docs/DECISIONS.md 一致，不得绕过 CourseLocks/WriteTransactions。Lombok 仅用于 B 的 entity，版本须与 docs/DECISIONS.md 一致，不得用于生成的 DTO。
 - HTTP路径、方法、字段、默认值、可空性、枚举、返回码是否与openapi一致，前后端生成类型是否同步。
 - 数据结构、外键、迁移、UUID、UTC时间、页序、Unicode码点规则是否一致。
 - 范围过滤是否先于Top-k；是否混入其他课程或未选择资料；会话范围是否被静默修改。
